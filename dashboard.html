@@ -1,195 +1,166 @@
 <title>Radar Swing Quant</title>
-<meta name="description" content="Análise quantitativa buy/hold/sell de 16 ações americanas via terminal Webull.">
+<meta name="description" content="Análise quantitativa buy/hold/sell de 24 ações americanas com stops, alvos e sizing, via terminal Webull.">
 <style>
 :root{
-  --bg:#eef1f5; --surface:#ffffff; --surface2:#f5f7fa; --line:#dde3ea;
-  --ink:#141a22; --ink2:#3f4a58; --muted:#6b7787; --faint:#9aa5b3;
-  --accent:#1f6f8b; --accent-soft:#e2eef2;
-  --buy:#0f8f5f; --buy-bg:#e3f4ec; --hold:#b9770c; --hold-bg:#f8efdc; --sell:#c73e3e; --sell-bg:#f8e5e5;
-  --pos:#1f7a94; --neg:#c76b4a;
+  --bg:#eef1f5;--surface:#fff;--surface2:#f5f7fa;--line:#dde3ea;
+  --ink:#141a22;--ink2:#3f4a58;--muted:#6b7787;--faint:#9aa5b3;
+  --accent:#1f6f8b;--accent-soft:#e2eef2;
+  --buy:#0f8f5f;--buy-bg:#e3f4ec;--hold:#b9770c;--hold-bg:#f8efdc;--sell:#c73e3e;--sell-bg:#f8e5e5;
+  --pos:#1f7a94;--neg:#c76b4a;--spec:#8e44ad;--spec-bg:#f0e6f6;
   --shadow:0 1px 2px rgba(20,26,34,.05),0 4px 16px rgba(20,26,34,.06);
 }
-:root:not([data-theme="light"]){}
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#0d1116; --surface:#161c24; --surface2:#1c242e; --line:#2a333f;
-    --ink:#e7ecf2; --ink2:#c2cad4; --muted:#8b96a5; --faint:#5e6a79;
-    --accent:#4bb3d1; --accent-soft:#16323c;
-    --buy:#3fc088; --buy-bg:#123024; --hold:#e0a838; --hold-bg:#332813; --sell:#e56b6b; --sell-bg:#331b1b;
-    --pos:#4bb3d1; --neg:#e08a63;
-    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
-  }
-}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1116;--surface:#161c24;--surface2:#1c242e;--line:#2a333f;
+  --ink:#e7ecf2;--ink2:#c2cad4;--muted:#8b96a5;--faint:#5e6a79;
+  --accent:#4bb3d1;--accent-soft:#16323c;
+  --buy:#3fc088;--buy-bg:#123024;--hold:#e0a838;--hold-bg:#332813;--sell:#e56b6b;--sell-bg:#331b1b;
+  --pos:#4bb3d1;--neg:#e08a63;--spec:#c084e0;--spec-bg:#2a1c33;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);}}
 :root[data-theme="dark"]{
-  --bg:#0d1116; --surface:#161c24; --surface2:#1c242e; --line:#2a333f;
-  --ink:#e7ecf2; --ink2:#c2cad4; --muted:#8b96a5; --faint:#5e6a79;
-  --accent:#4bb3d1; --accent-soft:#16323c;
-  --buy:#3fc088; --buy-bg:#123024; --hold:#e0a838; --hold-bg:#332813; --sell:#e56b6b; --sell-bg:#331b1b;
-  --pos:#4bb3d1; --neg:#e08a63;
-  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);
-}
+  --bg:#0d1116;--surface:#161c24;--surface2:#1c242e;--line:#2a333f;
+  --ink:#e7ecf2;--ink2:#c2cad4;--muted:#8b96a5;--faint:#5e6a79;
+  --accent:#4bb3d1;--accent-soft:#16323c;
+  --buy:#3fc088;--buy-bg:#123024;--hold:#e0a838;--hold-bg:#332813;--sell:#e56b6b;--sell-bg:#331b1b;
+  --pos:#4bb3d1;--neg:#e08a63;--spec:#c084e0;--spec-bg:#2a1c33;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.35);}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);
-  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  line-height:1.5;-webkit-font-smoothing:antialiased;}
-.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums;}
-.wrap{max-width:1140px;margin:0 auto;padding-inline:20px;padding-block:0;}
+body{background:var(--bg);color:var(--ink);font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0}
 h1,h2,h3{margin:0;text-wrap:balance;font-weight:600;letter-spacing:-.01em}
 a{color:var(--accent)}
-
-/* header */
-header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);
-  border-bottom:1px solid var(--line);}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
 .hd{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding-block:12px}
 .brand{display:flex;align-items:center;gap:10px;margin-right:auto}
-.logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#000));
-  display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;flex:none;box-shadow:var(--shadow)}
+.logo{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,var(--accent),color-mix(in srgb,var(--accent) 55%,#000));display:grid;place-items:center;color:#fff;font-weight:700;font-size:15px;flex:none;box-shadow:var(--shadow)}
 .brand h1{font-size:17px;line-height:1.15}
 .brand .sub{font-size:11.5px;color:var(--muted);letter-spacing:.02em}
 .chip{font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--ink2);background:var(--surface2);white-space:nowrap}
 .chip.ro{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,var(--line));background:var(--accent-soft)}
-.tbtn{cursor:pointer;font:inherit;font-size:12px;color:var(--ink2);background:var(--surface2);border:1px solid var(--line);
-  border-radius:8px;padding:6px 10px;display:inline-flex;gap:6px;align-items:center}
-
-/* hero band */
+.tbtn{cursor:pointer;font:inherit;font-size:12px;color:var(--ink2);background:var(--surface2);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
 .hero{padding-block:22px 6px}
 .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
 .hero h2{font-size:clamp(22px,4.4vw,30px);margin:8px 0 8px;line-height:1.12}
-.hero p{margin:0;color:var(--ink2);max-width:64ch;font-size:14.5px}
-
-/* tiles */
+.hero p{margin:0;color:var(--ink2);max-width:66ch;font-size:14.5px}
+.wl{margin-top:14px;display:flex;gap:10px;align-items:center;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,var(--line));border-radius:10px;padding:10px 13px;font-size:13px;color:var(--ink2);flex-wrap:wrap}
+.wl b{color:var(--accent)}
 .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:20px 0}
 .tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:13px 14px;box-shadow:var(--shadow)}
 .tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
 .tile .v{font-size:26px;font-weight:600;margin-top:3px;line-height:1}
 .tile .m{font-size:11.5px;color:var(--muted);margin-top:4px}
-.tile.buy{border-top:3px solid var(--buy)} .tile.buy .v{color:var(--buy)}
-.tile.hold{border-top:3px solid var(--hold)} .tile.hold .v{color:var(--hold)}
-.tile.sell{border-top:3px solid var(--sell)} .tile.sell .v{color:var(--sell)}
-
+.tile.buy{border-top:3px solid var(--buy)}.tile.buy .v{color:var(--buy)}
+.tile.hold{border-top:3px solid var(--hold)}.tile.hold .v{color:var(--hold)}
+.tile.sell{border-top:3px solid var(--sell)}.tile.sell .v{color:var(--sell)}
 section{margin:26px 0}
 .sh{display:flex;align-items:baseline;gap:10px;margin-bottom:12px;flex-wrap:wrap}
-.sh h3{font-size:15px}
-.sh .note{font-size:12px;color:var(--muted)}
-
-/* filters */
+.sh h3{font-size:15px}.sh .note{font-size:12px;color:var(--muted)}
 .filters{display:flex;gap:8px;flex-wrap:wrap}
-.fbtn{cursor:pointer;font:inherit;font-size:12.5px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);
-  background:var(--surface);color:var(--ink2)}
+.fbtn{cursor:pointer;font:inherit;font-size:12.5px;padding:6px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--ink2)}
 .fbtn[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
 .fbtn .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
-
-/* chart */
 .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
 .chart{padding:16px 16px 8px}
-.crow{display:grid;grid-template-columns:64px 1fr 46px;align-items:center;gap:10px;padding:3px 0;cursor:default}
-.crow .tk{font-size:12.5px;font-weight:600;text-align:right}
-.crow .tk small{display:block;font-weight:400;color:var(--faint);font-size:9.5px}
-.track{position:relative;height:20px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.crow{display:grid;grid-template-columns:64px 1fr 46px;align-items:center;gap:10px;padding:2px 0}
+.crow .tk{font-size:12px;font-weight:600;text-align:right}
+.crow .tk small{display:block;font-weight:400;color:var(--faint);font-size:9px}
+.track{position:relative;height:17px;background:var(--surface2);border-radius:5px;overflow:hidden}
 .bar{position:absolute;left:0;top:0;bottom:0;border-radius:5px;transition:width .5s cubic-bezier(.2,.7,.2,1)}
 .bar.BUY{background:linear-gradient(90deg,color-mix(in srgb,var(--buy) 70%,transparent),var(--buy))}
 .bar.HOLD{background:linear-gradient(90deg,color-mix(in srgb,var(--hold) 70%,transparent),var(--hold))}
 .bar.SELL{background:linear-gradient(90deg,color-mix(in srgb,var(--sell) 70%,transparent),var(--sell))}
 .thr{position:absolute;top:-2px;bottom:-2px;width:1px;background:var(--faint);opacity:.5}
-.thr b{position:absolute;top:-15px;left:50%;transform:translateX(-50%);font-size:8.5px;color:var(--muted);white-space:nowrap;font-weight:400}
-.crow .sc{font-size:13px;font-weight:600;text-align:right}
-.axis{grid-column:2;display:flex;justify-content:space-between;font-size:9.5px;color:var(--faint);padding-top:4px}
-
-/* table */
+.thr b{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:8px;color:var(--muted);font-weight:400}
+.crow .sc{font-size:12.5px;font-weight:600;text-align:right}
+.axis{grid-column:2;display:flex;justify-content:space-between;font-size:9px;color:var(--faint);padding-top:4px}
 .tblwrap{overflow-x:auto;border-radius:14px;border:1px solid var(--line);background:var(--surface);box-shadow:var(--shadow)}
-table{border-collapse:collapse;width:100%;min-width:720px}
-th,td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
-th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;
-  position:sticky;top:calc(env(safe-area-inset-top,0px));background:var(--surface2);cursor:pointer;user-select:none}
+table{border-collapse:collapse;width:100%;min-width:760px}
+th,td{padding:9px 11px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;position:sticky;top:calc(env(safe-area-inset-top,0px));background:var(--surface2);cursor:pointer;user-select:none}
 th:first-child,td:first-child{text-align:center}
 th.l,td.l{text-align:left}
-tbody tr{cursor:pointer}
-tbody tr:hover{background:var(--surface2)}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--surface2)}
 .rk{color:var(--faint);font-size:12px}
 .tkr{font-weight:600;font-size:13px}
-.tkr small{display:block;color:var(--muted);font-weight:400;font-size:11px;letter-spacing:0}
+.tkr small{display:block;color:var(--muted);font-weight:400;font-size:11px}
+.sbadge{display:inline-block;font-size:9px;font-weight:700;color:var(--spec);background:var(--spec-bg);border-radius:4px;padding:1px 4px;margin-left:5px;vertical-align:middle;letter-spacing:.03em}
 .pill{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;display:inline-block;min-width:52px;text-align:center}
-.pill.BUY{color:var(--buy);background:var(--buy-bg)} .pill.HOLD{color:var(--hold);background:var(--hold-bg)} .pill.SELL{color:var(--sell);background:var(--sell-bg)}
+.pill.BUY{color:var(--buy);background:var(--buy-bg)}.pill.HOLD{color:var(--hold);background:var(--hold-bg)}.pill.SELL{color:var(--sell);background:var(--sell-bg)}
 .scv{font-weight:600}
-.fstrip{display:inline-flex;gap:3px;align-items:center}
-.fb{position:relative;width:26px;height:16px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.fstrip{display:inline-flex;gap:3px}
+.fb{position:relative;width:24px;height:15px;background:var(--surface2);border-radius:3px;overflow:hidden}
 .fb i{position:absolute;top:0;bottom:0;left:50%;width:1px;background:var(--faint);opacity:.5}
 .fb s{position:absolute;top:2px;bottom:2px;border-radius:2px}
-.fb s.p{left:50%;background:var(--pos)} .fb s.n{right:50%;background:var(--neg)}
-.pos{color:var(--buy)} .neg{color:var(--sell)}
+.fb s.p{left:50%;background:var(--pos)}.fb s.n{right:50%;background:var(--neg)}
+.pos{color:var(--buy)}.neg{color:var(--sell)}
 .rsk{font-size:11px;padding:2px 7px;border-radius:5px;background:var(--surface2);color:var(--ink2)}
-
-/* detail row */
+.rsk.Alto{color:var(--sell);background:var(--sell-bg)}.rsk.Baixo{color:var(--buy);background:var(--buy-bg)}
 .detail td{background:var(--surface2);padding:0}
-.dbox{padding:14px 16px;display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+.dbox{padding:14px 16px;display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
 .dbox p{margin:0 0 10px;font-size:13.5px;color:var(--ink2);max-width:60ch}
+.plan{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.pchip{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-size:11px}
+.pchip .k{color:var(--muted);text-transform:uppercase;font-size:9.5px;letter-spacing:.04em}
+.pchip .v{font-weight:600;font-size:13px;margin-top:1px}
+.pchip.stop .v{color:var(--sell)}.pchip.t1 .v,.pchip.t2 .v{color:var(--buy)}
 .kv{display:grid;grid-template-columns:auto auto;gap:4px 14px;font-size:12px;align-content:start}
-.kv .k{color:var(--muted)} .kv .v{text-align:right;font-weight:500}
-
-/* cards */
+.kv .k{color:var(--muted)}.kv .v{text-align:right;font-weight:500}
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .pcard{background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--buy);border-radius:12px;padding:15px;box-shadow:var(--shadow)}
+.pcard.spec{border-top-color:var(--spec)}
 .pcard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .pcard .nm{font-weight:600;font-size:15px}.pcard .nm small{display:block;color:var(--muted);font-weight:400;font-size:11.5px}
-.pcard .th{font-size:13px;color:var(--ink2);margin:10px 0 12px}
-.pcard .lv{display:flex;gap:8px;flex-wrap:wrap}
-.lvl{flex:1;min-width:84px;background:var(--surface2);border-radius:8px;padding:7px 9px}
-.lvl .k{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.lvl .v{font-size:14px;font-weight:600;margin-top:1px}
-
-/* methodology */
+.pcard .th{font-size:12.5px;color:var(--ink2);margin:10px 0 12px}
+.pcard .lv{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.lvl{background:var(--surface2);border-radius:8px;padding:7px 9px}
+.lvl .k{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+.lvl .v{font-size:13.5px;font-weight:600;margin-top:1px}
+.lvl.st .v{color:var(--sell)}.lvl.tg .v{color:var(--buy)}
+.controls{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;padding:16px 16px 6px}
+.controls label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.controls input{font:inherit;font-size:15px;font-variant-numeric:tabular-nums;width:130px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface2);color:var(--ink)}
+.controls .hint{font-size:11.5px;color:var(--faint);max-width:34ch;line-height:1.4}
+.ptoggle{display:flex;gap:8px;padding:0 16px 12px}
+.risknote{font-size:11px;color:var(--muted);padding:0 16px 14px}
 .meth{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--shadow)}
 .wgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:14px 0}
 .wcell{background:var(--surface2);border-radius:10px;padding:11px}
-.wcell .p{font-size:20px;font-weight:600;color:var(--accent)} .wcell .n{font-size:11.5px;color:var(--ink2);margin-top:2px}
+.wcell .p{font-size:20px;font-weight:600;color:var(--accent)}.wcell .n{font-size:11.5px;color:var(--ink2);margin-top:2px}
 .wcell .d{font-size:10.5px;color:var(--muted);margin-top:3px;line-height:1.35}
 details{margin-top:12px;border-top:1px solid var(--line);padding-top:10px}
 summary{cursor:pointer;font-weight:600;font-size:13.5px;color:var(--ink2)}
-details ul{margin:10px 0 0;padding-left:18px;font-size:13px;color:var(--ink2)}
-details li{margin:5px 0}
-.disc{margin-top:14px;font-size:12px;color:var(--muted);background:var(--sell-bg);border:1px solid color-mix(in srgb,var(--sell) 25%,var(--line));
-  border-radius:10px;padding:12px 14px;line-height:1.5}
+details ul{margin:10px 0 0;padding-left:18px;font-size:13px;color:var(--ink2)}details li{margin:5px 0}
+.disc{margin-top:14px;font-size:12px;color:var(--muted);background:var(--sell-bg);border:1px solid color-mix(in srgb,var(--sell) 25%,var(--line));border-radius:10px;padding:12px 14px;line-height:1.5}
 .disc b{color:var(--sell)}
 footer{color:var(--faint);font-size:11.5px;text-align:center;padding:24px 0 8px;border-top:1px solid var(--line);margin-top:8px}
-
-/* tooltip */
-#tt{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--surface);font-size:11.5px;
-  padding:7px 9px;border-radius:7px;box-shadow:var(--shadow);opacity:0;transition:opacity .12s;max-width:240px;line-height:1.4}
+#tt{position:fixed;pointer-events:none;z-index:50;background:var(--ink);color:var(--surface);font-size:11.5px;padding:7px 9px;border-radius:7px;box-shadow:var(--shadow);opacity:0;transition:opacity .12s;max-width:240px;line-height:1.4}
 #tt .h{font-weight:600;margin-bottom:2px}
-
-@media (max-width:820px){
-  .tiles{grid-template-columns:repeat(2,1fr)} .tiles .tile:first-child{grid-column:1/-1}
-  .cards{grid-template-columns:1fr} .wgrid{grid-template-columns:repeat(2,1fr)}
-  .dbox{grid-template-columns:1fr}
-}
+@media (max-width:820px){.tiles{grid-template-columns:repeat(2,1fr)}.tiles .tile:first-child{grid-column:1/-1}.cards{grid-template-columns:1fr}.wgrid{grid-template-columns:repeat(2,1fr)}.dbox{grid-template-columns:1fr}.pcard .lv{grid-template-columns:repeat(2,1fr)}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 
-<header>
- <div class="wrap hd">
-  <div class="brand">
-   <div class="logo">Q</div>
-   <div><h1>Radar Swing Quant</h1><div class="sub mono">Terminal Webull · EUA · 16 ativos</div></div>
-  </div>
+<header><div class="wrap hd">
+  <div class="brand"><div class="logo">Q</div>
+   <div><h1>Radar Swing Quant</h1><div class="sub mono">Terminal Webull · EUA · 24 ativos</div></div></div>
   <span class="chip ro">● Conta somente leitura</span>
   <span class="chip mono" id="asof"></span>
   <button class="tbtn" id="theme">◐ Tema</button>
- </div>
-</header>
+</div></header>
 
 <div class="wrap">
  <div class="hero">
   <div class="eyebrow">Análise quantitativa · perfil agressivo / curto prazo</div>
-  <h2>Buy · Hold · Sell por score multifatorial</h2>
-  <p>Screening de mercado filtrado por liquidez, pontuado por um modelo de 5 blocos com peso maior em <b>momentum, técnico e fluxo de capital</b>. O mercado é liderado por <b>semicondutores</b> — que ocupam o topo do ranking. Clique em qualquer linha da tabela para ver a tese e os níveis.</p>
+  <h2>Buy · Hold · Sell com stops, alvos e sizing</h2>
+  <p>24 ações americanas líquidas (mega/large-caps + <b>mid-caps de momentum</b> em 8 setores) pontuadas por um modelo de 5 blocos com peso em momentum, técnico e fluxo. Cada nome traz <b>stop (2×ATR), alvos (múltiplos de R) e tamanho por volatilidade</b>. Clique numa linha para o detalhe.</p>
+  <div class="wl">📌 <span><b>Watchlist criada na Webull:</b> “Radar Swing Quant” — SMTC, SECZ, PURR, MU, FRNM, AMD, META (BUYs + candidatas de entrada).</span></div>
  </div>
 
  <div class="tiles" id="tiles"></div>
 
  <section>
-  <div class="sh"><h3>Ranking por score composto</h3><span class="note">escala focada em 34–68 · linhas = fronteiras dos vereditos (45 / 55)</span></div>
+  <div class="sh"><h3>Ranking por score composto</h3><span class="note">escala 30–72 · linhas = fronteiras (45 / 55) · ⚠ = especulativo</span></div>
   <div class="filters" id="filters" style="margin-bottom:12px">
-   <button class="fbtn" data-f="ALL" aria-pressed="true">Todos <span class="mono">(16)</span></button>
+   <button class="fbtn" data-f="ALL" aria-pressed="true">Todos <span class="mono">(24)</span></button>
    <button class="fbtn" data-f="BUY" aria-pressed="false"><span class="dot" style="background:var(--buy)"></span>Compra</button>
    <button class="fbtn" data-f="HOLD" aria-pressed="false"><span class="dot" style="background:var(--hold)"></span>Manter</button>
    <button class="fbtn" data-f="SELL" aria-pressed="false"><span class="dot" style="background:var(--sell)"></span>Evitar</button>
@@ -197,120 +168,114 @@ footer{color:var(--faint);font-size:11.5px;text-align:center;padding:24px 0 8px;
   <div class="card chart" id="chart"></div>
  </section>
 
- <section>
-  <div class="sh"><h3>Tabela de fatores</h3><span class="note">clique no cabeçalho p/ ordenar · na linha p/ detalhes · sub-scores em desvios-padrão (z)</span></div>
-  <div class="tblwrap">
-   <table id="tbl">
-    <thead><tr>
-     <th data-s="rank">#</th>
-     <th class="l" data-s="t">Ativo</th>
-     <th class="l" data-s="sector">Setor</th>
-     <th data-s="verdict">Veredito</th>
-     <th data-s="score">Score</th>
-     <th data-s="mom">Fatores (M·T·F·A)</th>
-     <th data-s="r21">1M %</th>
-     <th data-s="r63">3M %</th>
-     <th data-s="rsi">RSI</th>
-     <th data-s="upside">Upside %</th>
-     <th data-s="vol">Risco</th>
-    </tr></thead>
-    <tbody id="tbody"></tbody>
-   </table>
+ <section id="plan">
+  <div class="sh"><h3>Plano de trade &amp; sizing por volatilidade</h3><span class="note">stop 2×ATR · alvos 2R/3R · ações = risco fixo ÷ distância do stop</span></div>
+  <div class="card">
+   <div class="controls">
+    <label>Tamanho da conta (USD)<input id="acct" type="number" value="10000" min="100" step="500"></label>
+    <label>Risco por trade (%)<input id="riskpct" type="number" value="1" min="0.1" max="5" step="0.1"></label>
+    <div class="hint">Ações = (Conta × Risco%) ÷ (Entrada − Stop). O “Peso vol” distribui a cesta de compra ∝ 1/ATR% (menor volatilidade → maior peso).</div>
+   </div>
+   <div class="ptoggle filters" id="planfilter">
+    <button class="fbtn" data-pf="BUY" aria-pressed="true">Somente compras</button>
+    <button class="fbtn" data-pf="ALL" aria-pressed="false">Todos os 24</button>
+   </div>
+   <div class="tblwrap" style="border:0;box-shadow:none;border-radius:0">
+    <table id="plantbl" style="min-width:820px"><thead><tr>
+     <th class="l">Ativo</th><th>Entrada</th><th>Stop 2×ATR</th><th>Stop %</th>
+     <th>Alvo 1 · 2R</th><th>Alvo 2 · 3R</th><th>Alvo analistas</th><th>Peso vol</th>
+     <th>Ações</th><th>Posição</th><th>% conta</th>
+    </tr></thead><tbody id="planbody"></tbody></table>
+   </div>
+   <div class="risknote">Alvo 1 = 2× o risco (R:R 2:1) · Alvo 2 = 3× (R:R 3:1). “Alvo analistas” é o preço-alvo médio (referência, não gatilho). Invalidação estrutural: fechamento abaixo da SMA50.</div>
   </div>
  </section>
 
  <section>
-  <div class="sh"><h3>Destaques de compra</h3><span class="note">os 3 setups mais fortes · níveis de referência (não são ordens)</span></div>
+  <div class="sh"><h3>Tabela de fatores</h3><span class="note">clique no cabeçalho p/ ordenar · na linha p/ detalhes + plano · sub-scores em z</span></div>
+  <div class="tblwrap"><table id="tbl"><thead><tr>
+   <th data-s="rank">#</th><th class="l" data-s="t">Ativo</th><th class="l" data-s="sector">Setor</th>
+   <th data-s="verdict">Veredito</th><th data-s="score">Score</th><th data-s="mom">Fatores (M·T·F·A)</th>
+   <th data-s="r21">1M %</th><th data-s="r63">3M %</th><th data-s="rsi">RSI</th>
+   <th data-s="upside">Upside %</th><th data-s="atrPct">ATR %</th><th data-s="vol">Risco</th>
+  </tr></thead><tbody id="tbody"></tbody></table></div>
+ </section>
+
+ <section>
+  <div class="sh"><h3>Destaques de compra</h3><span class="note">os 3 setups do topo · níveis de referência (não são ordens)</span></div>
   <div class="cards" id="cards"></div>
  </section>
 
- <section>
-  <div class="meth">
+ <section><div class="meth">
    <div class="sh" style="margin-bottom:4px"><h3>Metodologia &amp; pesos</h3></div>
-   <p style="font-size:13px;color:var(--ink2);margin:6px 0 0;max-width:70ch">Cada fator é convertido em <b>z-score</b> (desvio vs. a média do universo) e combinado nos pesos abaixo, calibrados para operação de curto prazo com apetite a risco. O score é reescalado para 0–100. Penalidade extra para papéis <i>esticados</i> (acima do alvo de analistas + RSI alto).</p>
+   <p style="font-size:13px;color:var(--ink2);margin:6px 0 0;max-width:72ch">Cada fator vira <b>z-score</b> (desvio vs. a média do universo) e é combinado nos pesos abaixo (perfil agressivo/curto prazo). O bloco de analistas é <b>escalado pela confiança da cobertura</b> (menos casas → menos peso), e há penalidade para papéis <i>esticados</i> (acima do alvo + RSI alto), <i>parabólicos</i> (+70% em 3M com RSI quente) e <i>sem fundamento</i>. Score reescalado 0–100.</p>
    <div class="wgrid" id="wgrid"></div>
-   <details><summary>Como interpretar os vereditos</summary>
-    <ul>
-     <li><b style="color:var(--buy)">Compra (≥55)</b> — melhor combinação de tendência, fluxo e sentimento agora; entrada com gestão de risco.</li>
-     <li><b style="color:var(--hold)">Manter (45–55)</b> — tese válida mas sem gatilho de curto prazo, ou já em núcleo de carteira; aguardar recuo/confirmação.</li>
-     <li><b style="color:var(--sell)">Evitar (&lt;55)</b> — <i>momentum fraco</i> (abaixo das médias, queda em 3M) ou <i>esticado</i> (acima do alvo + sobrecomprado). Não é recomendação de venda a descoberto.</li>
-    </ul>
-   </details>
-   <details><summary>Fontes de dados (terminal Webull)</summary>
-    <ul>
-     <li><b>Momentum/Técnico:</b> candles diários — retornos 1M/3M, SMA 20/50, RSI(14), volatilidade anualizada.</li>
-     <li><b>Fluxo de capital:</b> entrada/saída líquida de ordens grandes+médias (3 dias) vs. capitalização.</li>
-     <li><b>Analistas:</b> preço-alvo médio (upside) e distribuição de ratings (strong buy → underperform).</li>
-     <li><b>Valuation/qualidade:</b> P/E, P/S, EPS TTM (peso menor, como filtro de sanidade).</li>
-    </ul>
-   </details>
-   <div class="disc"><b>Aviso.</b> Conteúdo educacional/analítico gerado a partir de dados de mercado do terminal Webull — <b>não é recomendação de investimento</b>. A conta conectada é somente leitura; nenhuma ordem foi ou pode ser enviada. Ações de alta volatilidade envolvem risco de perda relevante. Faça sua própria diligência e considere seu perfil antes de operar.</div>
-  </div>
- </section>
-
- <footer>Radar Swing Quant · dados: terminal Webull (L1) · gerado em análise quantitativa · valores em USD</footer>
+   <details><summary>Stops, alvos e sizing</summary><ul>
+    <li><b>Stop:</b> 2 × ATR(14) abaixo da entrada — adapta-se à volatilidade real de cada papel.</li>
+    <li><b>Alvos:</b> múltiplos do risco (R = distância até o stop). Alvo 1 = 2R (R:R 2:1), Alvo 2 = 3R (3:1).</li>
+    <li><b>Sizing por risco:</b> nº de ações = (conta × risco%) ÷ (entrada − stop). Risco fixo por trade padroniza a perda máxima.</li>
+    <li><b>Sizing por volatilidade (cesta):</b> peso ∝ 1/ATR% entre as compras — a de menor volatilidade recebe a maior fatia.</li>
+   </ul></details>
+   <details><summary>Como interpretar os vereditos</summary><ul>
+    <li><b style="color:var(--buy)">Compra (≥55)</b> — melhor combinação de tendência, fluxo e sentimento; entrar com gestão de risco.</li>
+    <li><b style="color:var(--hold)">Manter (45–55)</b> — tese válida sem gatilho de curto prazo; aguardar recuo/confirmação.</li>
+    <li><b style="color:var(--sell)">Evitar (&lt;45)</b> — momentum fraco ou esticado/parabólico. Não é recomendação de venda a descoberto.</li>
+    <li><b style="color:var(--spec)">⚠ Especulativo</b> — cripto/recém-listada/cobertura fina e sem lucro. Risco elevado mesmo quando pontua bem.</li>
+   </ul></details>
+   <details><summary>Fontes &amp; ressalvas de dados (Webull)</summary><ul>
+    <li>Técnico: candles diários (70 barras) — retornos 1M/3M, SMA 20/50, RSI(14), ATR(14), volatilidade.</li>
+    <li>Fluxo: entrada/saída líquida de ordens grandes+médias (3 dias) vs. capitalização.</li>
+    <li>Analistas: preço-alvo médio e ratings; <b>SMMT</b> tem alvo publicado em GBP (convertido ~1,26 — conferir).</li>
+    <li>Recém-listadas (SECZ, PURR, FRNM, ASST) têm histórico curto e cobertura fina — sinais menos robustos.</li>
+   </ul></details>
+   <div class="disc"><b>Aviso.</b> Conteúdo analítico/educacional a partir de dados do terminal Webull — <b>não é recomendação de investimento</b>. Conta somente leitura; nenhuma ordem foi ou pode ser enviada. Stops/alvos são referências técnicas, não garantias — gaps podem ultrapassar o stop. Ativos de alta volatilidade e especulativos envolvem risco de perda relevante. Faça sua própria diligência.</div>
+ </div></section>
+ <footer>Radar Swing Quant · dados: terminal Webull (L1) · 24 ativos · valores em USD · watchlist sincronizada na Webull</footer>
 </div>
 <div id="tt"></div>
 
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <script>
-const DATA = {"rows": [{"rank": 1, "t": "SMTC", "name": "Semtech", "sector": "Semis (mid)", "verdict": "BUY", "score": 64.9, "mom": 1.49, "tech": 1.18, "flow": -1.46, "anal": 0.37, "valq": 0.19, "pen": 0, "r21": 47.6, "r63": 16.9, "rsi": 67.2, "upside": 13.1, "bull": 0.9, "vol": 91.9, "risk": "Alto", "price": 185.0, "sma20": 147.55, "sma50": 136.84, "disthi": -0.2, "pe": 109.4, "ps": 14.68, "yld": 0.0, "mcap": 17.3, "netflow": -24.0, "thesis": "Líder de momentum: +48% no mês rompendo a máxima de 52s, consenso 14/15 em compra. Volatilidade alta (92% a.a.) — dimensione a posição.", "reason": ""}, {"rank": 2, "t": "AMD", "name": "Advanced Micro Devices", "sector": "Semis", "verdict": "BUY", "score": 57.3, "mom": 0.1, "tech": 0.62, "flow": 1.06, "anal": 0.01, "valq": -0.4, "pen": 0, "r21": 20.0, "r63": 4.2, "rsi": 65.5, "upside": 10.1, "bull": 0.75, "vol": 49.1, "risk": "Médio", "price": 559.82, "sma20": 490.75, "sma50": 495.85, "disthi": -4.3, "pe": 143.6, "ps": 22.12, "yld": 0.0, "mcap": 913.9, "netflow": 2509.0, "thesis": "Semis em aceleração; RSI saudável (65), acima das médias 20/50 e forte fluxo institucional entrando. Setup técnico limpo.", "reason": ""}, {"rank": 3, "t": "MU", "name": "Micron", "sector": "Semis", "verdict": "BUY", "score": 56.8, "mom": -0.5, "tech": 0.25, "flow": 1.01, "anal": 1.13, "valq": 0.93, "pen": 0, "r21": 8.4, "r63": -10.4, "rsi": 58.5, "upside": 49.0, "bull": 0.83, "vol": 50.8, "risk": "Médio", "price": 1015.8, "sma20": 959.6, "sma50": 927.26, "disthi": -19.0, "pe": 23.0, "ps": 12.7, "yld": 0.06, "mcap": 1147.2, "netflow": 3041.0, "thesis": "Memória em ciclo forte: fluxo comprador pesado, upside +49% ao alvo e EPS_TTM robusto. Queda de 3M já foi digerida.", "reason": ""}, {"rank": 4, "t": "META", "name": "Meta Platforms", "sector": "Mega Tech", "verdict": "HOLD", "score": 53.1, "mom": 0.25, "tech": 0.28, "flow": -0.75, "anal": 0.24, "valq": 0.93, "pen": 0, "r21": 21.9, "r63": 15.3, "rsi": 65.9, "upside": 13.4, "bull": 0.83, "vol": 29.6, "risk": "Baixo", "price": 665.75, "sma20": 614.61, "sma50": 607.38, "disthi": -15.5, "pe": 25.07, "ps": 7.43, "yld": 0.32, "mcap": 1696.0, "netflow": -400.0, "thesis": "+22% no mês e acima das médias; único ruído é a saída institucional pontual. Fundamento sólido, P/E 25 razoável para o grupo.", "reason": ""}, {"rank": 5, "t": "INTC", "name": "Intel", "sector": "Semis", "verdict": "HOLD", "score": 52.0, "mom": -0.29, "tech": 0.74, "flow": 2.01, "anal": -1.04, "valq": -1.73, "pen": 0, "r21": 17.0, "r63": -18.9, "rsi": 61.9, "upside": 7.2, "bull": 0.27, "vol": 59.5, "risk": "Alto", "price": 108.6, "sma20": 95.87, "sma50": 97.09, "disthi": -23.7, "pe": -51.2, "ps": 9.6, "yld": 0.0, "mcap": 574.0, "netflow": 2469.0, "thesis": "Reviravolta especulativa: +17% no mês com forte fluxo comprador, mas ainda -19% em 3M, prejuízo (EPS neg.) e 32/49 analistas em 'hold'. Trade tático, não tese.", "reason": ""}, {"rank": 6, "t": "NVDA", "name": "NVIDIA", "sector": "Semis", "verdict": "HOLD", "score": 49.2, "mom": -0.59, "tech": -0.17, "flow": -0.24, "anal": 1.15, "valq": 0.34, "pen": 0, "r21": 2.3, "r63": 5.6, "rsi": 54.4, "upside": 47.4, "bull": 0.85, "vol": 45.3, "risk": "Médio", "price": 222.27, "sma20": 218.72, "sma50": 214.07, "disthi": -5.8, "pe": 28.1, "ps": 17.72, "yld": 0.45, "mcap": 5356.7, "netflow": 3248.0, "thesis": "Bellwether consolidando: momentum curto esfriou (RSI 54), mas upside +47% e ratings excepcionais. Preferir compra em recuo às médias.", "reason": ""}, {"rank": 7, "t": "PLTR", "name": "Palantir", "sector": "Mega Tech", "verdict": "HOLD", "score": 48.2, "mom": -0.09, "tech": -0.09, "flow": 0.65, "anal": -0.3, "valq": -1.29, "pen": 0, "r21": 1.4, "r63": 38.3, "rsi": 57.0, "upside": 10.8, "bull": 0.59, "vol": 50.5, "risk": "Médio", "price": 177.64, "sma20": 175.9, "sma50": 158.26, "disthi": -14.4, "pe": 151.4, "ps": 69.34, "yld": 0.0, "mcap": 426.9, "netflow": 881.0, "thesis": "Momentum de médio prazo forte (+38% em 3M) mas travado no curto; valuation extremo (P/S 69). Risco alto — segurar.", "reason": ""}, {"rank": 8, "t": "GOOGL", "name": "Alphabet", "sector": "Mega Tech", "verdict": "HOLD", "score": 47.3, "mom": -0.79, "tech": -0.1, "flow": 0.29, "anal": 0.43, "valq": 0.93, "pen": 0, "r21": 1.5, "r63": -5.0, "rsi": 55.1, "upside": 22.5, "bull": 0.81, "vol": 22.6, "risk": "Baixo", "price": 349.54, "sma20": 341.68, "sma50": 345.4, "disthi": -14.3, "pe": 17.56, "ps": 9.59, "yld": 0.25, "mcap": 4274.9, "netflow": 6286.0, "thesis": "O mais barato do grupo (P/E 17,6) e com fluxo comprador, mas momentum curto lateral. Núcleo/segurar.", "reason": ""}, {"rank": 9, "t": "HAFN", "name": "Hafnia", "sector": "Shipping", "verdict": "HOLD", "score": 46.0, "mom": 1.4, "tech": -0.96, "flow": -0.57, "anal": -0.72, "valq": 0.93, "pen": -0.25, "r21": 35.3, "r63": 48.0, "rsi": 86.3, "upside": 1.3, "bull": 0.5, "vol": 36.9, "risk": "Médio", "price": 10.12, "sma20": 8.66, "sma50": 7.75, "disthi": 0.0, "pe": 7.76, "ps": 1.9, "yld": 10.98, "mcap": 5.06, "netflow": 0.0, "thesis": "Shipping esticado: RSI 86 e já no alvo dos analistas. Dividendo ~11% atrai, mas não perseguir aqui — aguardar recuo.", "reason": ""}, {"rank": 10, "t": "TSM", "name": "Taiwan Semi (TSMC)", "sector": "Semis", "verdict": "HOLD", "score": 46.0, "mom": -0.61, "tech": 0.06, "flow": -0.49, "anal": 0.54, "valq": -0.4, "pen": 0, "r21": 5.8, "r63": -5.7, "rsi": 57.6, "upside": 27.1, "bull": 0.81, "vol": 27.9, "risk": "Baixo", "price": 434.67, "sma20": 421.53, "sma50": 416.33, "disthi": -6.3, "pe": 31.68, "ps": 16.06, "yld": 0.94, "mcap": 2254.4, "netflow": 422.0, "thesis": "Tendência intacta e upside +27%, porém momentum de curto prazo morno. Núcleo de carteira, não gatilho de swing agora.", "reason": ""}, {"rank": 11, "t": "AAPL", "name": "Apple", "sector": "Mega Tech", "verdict": "HOLD", "score": 45.8, "mom": -0.36, "tech": 0.12, "flow": 0.64, "anal": -1.02, "valq": 0.19, "pen": 0, "r21": 6.1, "r63": 12.9, "rsi": 64.3, "upside": -2.4, "bull": 0.4, "vol": 21.3, "risk": "Baixo", "price": 336.13, "sma20": 322.64, "sma50": 320.03, "disthi": -2.4, "pe": 38.53, "ps": 10.52, "yld": 0.32, "mcap": 4905.5, "netflow": 10065.0, "thesis": "Perto da máxima, mas SEM upside (preço acima do alvo médio) e ratings mistos (3 sell + 3 underperform). Evitar entrada nova.", "reason": ""}, {"rank": 12, "t": "TSLA", "name": "Tesla", "sector": "Mega Tech", "verdict": "SELL", "score": 44.2, "mom": -0.72, "tech": -0.2, "flow": 1.35, "anal": -0.87, "valq": 0.19, "pen": 0, "r21": 3.7, "r63": -9.0, "rsi": 54.0, "upside": 9.0, "bull": 0.33, "vol": 47.9, "risk": "Médio", "price": 364.27, "sma20": 359.6, "sma50": 350.25, "disthi": -27.0, "pe": 338.4, "ps": 13.88, "yld": 0.0, "mcap": 1438.7, "netflow": 4625.0, "thesis": "Sem tendência definida (-9% em 3M) e consenso morno (20 'hold'). Fluxo entrou hoje, mas o setup segue fraco.", "reason": "Setup fraco no curto prazo"}, {"rank": 13, "t": "ORCL", "name": "Oracle", "sector": "Mega Tech", "verdict": "SELL", "score": 43.5, "mom": -0.87, "tech": -0.73, "flow": -0.63, "anal": 1.21, "valq": 0.93, "pen": 0, "r21": 2.6, "r63": -19.6, "rsi": 49.3, "upside": 61.2, "bull": 0.71, "vol": 51.1, "risk": "Médio", "price": 147.61, "sma20": 149.41, "sma50": 141.0, "disthi": -54.7, "pe": 23.14, "ps": 6.22, "yld": 1.35, "mcap": 446.3, "netflow": -19.0, "thesis": "Quebrou a tendência: -20% em 3M, ~45% da máxima. Analistas veem +61% (possível valor), mas para swing é faca caindo — evitar.", "reason": "Momentum fraco (queda em 3M)"}, {"rank": 14, "t": "TWST", "name": "Twist Bioscience", "sector": "Biotech", "verdict": "SELL", "score": 42.2, "mom": 1.5, "tech": 0.62, "flow": -1.17, "anal": -1.47, "valq": -2.32, "pen": -0.45, "r21": 17.3, "r63": 90.7, "rsi": 73.0, "upside": -34.4, "bull": 0.58, "vol": 70.1, "risk": "Alto", "price": 166.99, "sma20": 139.2, "sma50": 118.31, "disthi": -0.0, "pe": -75.1, "ps": 24.24, "yld": 0.0, "mcap": 11.0, "netflow": -10.0, "thesis": "+91% em 3M e ~34% ACIMA do alvo médio, prejuízo e P/S 24. Exagero clássico — realizar / não perseguir.", "reason": "Esticado/sobrecomprado — não perseguir"}, {"rank": 15, "t": "AVGO", "name": "Broadcom", "sector": "Semis", "verdict": "SELL", "score": 40.6, "mom": -1.08, "tech": -0.89, "flow": -0.33, "anal": 1.21, "valq": -0.4, "pen": 0, "r21": -1.3, "r63": -12.9, "rsi": 45.7, "upside": 48.7, "bull": 0.87, "vol": 33.3, "risk": "Baixo", "price": 357.61, "sma20": 359.32, "sma50": 379.75, "disthi": -27.6, "pe": 45.65, "ps": 19.16, "yld": 0.73, "mcap": 1707.1, "netflow": 780.0, "thesis": "O elo fraco dos semis: abaixo da SMA50, RSI 46, sem momentum. O alto upside de alvo não compensa a fraqueza técnica.", "reason": "Momentum fraco (queda em 3M)"}, {"rank": 16, "t": "TRMD", "name": "Torm", "sector": "Shipping", "verdict": "SELL", "score": 37.8, "mom": 1.18, "tech": -0.74, "flow": -1.37, "anal": -0.87, "valq": 0.93, "pen": -0.45, "r21": 32.5, "r63": 39.6, "rsi": 80.2, "upside": -4.5, "bull": 0.5, "vol": 46.4, "risk": "Médio", "price": 38.23, "sma20": 32.67, "sma50": 29.65, "disthi": -1.3, "pe": 6.3, "ps": 2.22, "yld": 11.56, "mcap": 3.92, "netflow": -5.0, "thesis": "Shipping esticado (RSI 80) e acima do alvo. Dividendo 11,6% e P/E 6 são atrativos de valor, não de swing.", "reason": "Esticado/sobrecomprado — não perseguir"}], "counts": {"BUY": 3, "HOLD": 8, "SELL": 5}, "weights": {"mom": 0.35, "tech": 0.25, "flow": 0.15, "anal": 0.2, "valq": 0.05}, "asof": "18 set 2026 (fechamento)", "n": 16};
-const $=(s,e=document)=>e.querySelector(s), $$=(s,e=document)=>[...e.querySelectorAll(s)];
+const DATA={"rows": [{"rank": 1, "t": "PURR", "name": "Hyperliquid Strat.", "sector": "Cripto", "verdict": "BUY", "score": 64.2, "mom": 0.97, "tech": 0.43, "flow": 2.29, "anal": 0.51, "valq": -1.02, "r21": 50.1, "r63": 51.8, "rsi": 68.9, "upside": 58.3, "bull": 0.88, "vol": 110.1, "risk": "Alto", "spec": true, "cov": 4, "gbp": false, "price": 14.09, "sma20": 11.85, "sma50": 8.91, "disthi": -2.6, "pe": null, "ps": null, "eps": -1.0, "yld": 0.0, "mcap": 2.79, "net": 23.0, "atr": 1.239, "atrPct": 8.8, "stop": 11.61, "stopPct": 17.6, "t1": 19.05, "t2": 21.52, "t1pct": 35.2, "t2pct": 52.8, "ivw": 27.7, "target": 22.3, "thesis": "ESPECULATIVA pura: cripto-treasury (Hyperliquid) na máxima; momentum forte, analistas veem +58%. Aposta alavancada em cripto — sizing pequeno e stop rígido."}, {"rank": 2, "t": "SECZ", "name": "Securitize", "sector": "Fintech", "verdict": "BUY", "score": 63.7, "mom": 0.91, "tech": 1.28, "flow": -0.34, "anal": 0.06, "valq": 0.52, "r21": 80.1, "r63": -2.3, "rsi": 73.7, "upside": 8.7, "bull": 0.8, "vol": 108.7, "risk": "Alto", "spec": true, "cov": 5, "gbp": false, "price": 10.86, "sma20": 7.47, "sma50": 7.22, "disthi": -22.7, "pe": 108.9, "ps": null, "eps": 0.1, "yld": 0.0, "mcap": 1.77, "net": -1.0, "atr": 0.819, "atrPct": 7.5, "stop": 9.22, "stopPct": 15.1, "t1": 14.14, "t2": 15.77, "t1pct": 30.2, "t2pct": 45.2, "ivw": 32.4, "target": 11.8, "thesis": "ESPECULATIVA: fintech de tokenização (+80% no mês) rompendo com fluxo comprador. Recém-listada, P/E 109, cobertura fina — momentum com stop curto."}, {"rank": 3, "t": "SMTC", "name": "Semtech", "sector": "Semis", "verdict": "BUY", "score": 56.9, "mom": 0.38, "tech": 0.76, "flow": -0.66, "anal": 0.33, "valq": 0.52, "r21": 47.6, "r63": 16.9, "rsi": 67.2, "upside": 13.1, "bull": 0.9, "vol": 91.9, "risk": "Alto", "spec": false, "cov": 15, "gbp": false, "price": 185.0, "sma20": 147.55, "sma50": 136.84, "disthi": -0.2, "pe": 109.4, "ps": 14.68, "eps": 1.69, "yld": 0.0, "mcap": 17.3, "net": -24.0, "atr": 11.223, "atrPct": 6.1, "stop": 162.55, "stopPct": 12.1, "t1": 229.89, "t2": 252.34, "t1pct": 24.3, "t2pct": 36.4, "ivw": 39.9, "target": 209.29, "thesis": "Compra de maior qualidade do grupo: +48% no mês rompendo máxima de 52s, 15 analistas (14 compra), fluxo ok. Vol. alta — respeite o sizing."}, {"rank": 4, "t": "MU", "name": "Micron", "sector": "Semis", "verdict": "HOLD", "score": 52.1, "mom": -0.81, "tech": 0.14, "flow": 0.56, "anal": 1.02, "valq": 1.11, "r21": 8.4, "r63": -10.4, "rsi": 58.5, "upside": 49.0, "bull": 0.83, "vol": 50.8, "risk": "Médio", "spec": false, "cov": 49, "gbp": false, "price": 1015.8, "sma20": 959.6, "sma50": 927.26, "disthi": -19.0, "pe": 23.0, "ps": 12.7, "eps": 44.17, "yld": 0.06, "mcap": 1147.2, "net": 3041.0, "atr": 42.973, "atrPct": 4.2, "stop": 929.85, "stopPct": 8.5, "t1": 1187.69, "t2": 1273.64, "t1pct": 16.9, "t2pct": 25.4, "ivw": 0, "target": 1513.1, "thesis": "Memória em ciclo forte: fluxo comprador pesado e upside +49% ao alvo; EPS_TTM robusto. Correção de 3M digerida — quase-compra."}, {"rank": 5, "t": "FRNM", "name": "Freenome", "sector": "Diagnóstico", "verdict": "HOLD", "score": 51.5, "mom": 0.31, "tech": 0.19, "flow": -0.43, "anal": 0.14, "valq": -1.02, "r21": 25.5, "r63": 54.3, "rsi": 69.3, "upside": 5.2, "bull": 1.0, "vol": 61.8, "risk": "Médio", "spec": true, "cov": 5, "gbp": false, "price": 17.11, "sma20": 15.11, "sma50": 13.07, "disthi": -0.8, "pe": -248, "ps": 15.0, "eps": -0.069, "yld": 0.0, "mcap": 1.84, "net": -1.0, "atr": 0.956, "atrPct": 5.6, "stop": 15.2, "stopPct": 11.2, "t1": 20.93, "t2": 22.85, "t1pct": 22.3, "t2pct": 33.5, "ivw": 0, "target": 18.0, "thesis": "Diagnóstico recém-listado na máxima; 5 casas strong buy. Cobertura fina e sem lucro — momentum de IPO, risco alto."}, {"rank": 6, "t": "AMD", "name": "Advanced Micro Devices", "sector": "Semis", "verdict": "HOLD", "score": 51.0, "mom": -0.44, "tech": 0.39, "flow": 0.59, "anal": 0.09, "valq": -0.07, "r21": 20.0, "r63": 4.2, "rsi": 65.5, "upside": 10.1, "bull": 0.75, "vol": 49.1, "risk": "Médio", "spec": false, "cov": 55, "gbp": false, "price": 559.82, "sma20": 490.75, "sma50": 495.85, "disthi": -4.3, "pe": 143.6, "ps": 22.12, "eps": 3.9, "yld": 0.0, "mcap": 913.9, "net": 2509.0, "atr": 22.327, "atrPct": 4.0, "stop": 515.17, "stopPct": 8.0, "t1": 649.13, "t2": 693.78, "t1pct": 16.0, "t2pct": 23.9, "ivw": 0, "target": 616.5, "thesis": "Semis em aceleração; RSI 65 saudável, acima das médias 20/50 e forte fluxo institucional. Aguardar leve recuo p/ entrada de menor risco."}, {"rank": 7, "t": "META", "name": "Meta Platforms", "sector": "Mega Tech", "verdict": "HOLD", "score": 49.6, "mom": -0.33, "tech": 0.14, "flow": -0.3, "anal": 0.25, "valq": 1.11, "r21": 21.9, "r63": 15.3, "rsi": 65.9, "upside": 13.4, "bull": 0.83, "vol": 29.6, "risk": "Baixo", "spec": false, "cov": 62, "gbp": false, "price": 665.75, "sma20": 614.61, "sma50": 607.38, "disthi": -15.5, "pe": 25.07, "ps": 7.43, "eps": 26.56, "yld": 0.32, "mcap": 1696.0, "net": -400.0, "atr": 21.788, "atrPct": 3.3, "stop": 622.17, "stopPct": 6.5, "t1": 752.9, "t2": 796.48, "t1pct": 13.1, "t2pct": 19.6, "ivw": 0, "target": 755.28, "thesis": "+22% no mês e acima das médias; ruído de saída institucional pontual. Fundamento sólido (P/E 25). Watch p/ rompimento."}, {"rank": 8, "t": "ODD", "name": "Oddity Tech", "sector": "Consumo", "verdict": "HOLD", "score": 48.7, "mom": 0.27, "tech": 0.65, "flow": -0.03, "anal": -1.68, "valq": 0.52, "r21": 38.2, "r63": 38.6, "rsi": 61.1, "upside": -17.6, "bull": -0.25, "vol": 116.3, "risk": "Alto", "spec": false, "cov": 10, "gbp": false, "price": 18.11, "sma20": 15.6, "sma50": 15.14, "disthi": -71.8, "pe": 76.0, "ps": 1.54, "eps": 0.24, "yld": 0.0, "mcap": 0.835, "net": 1.0, "atr": 1.642, "atrPct": 9.1, "stop": 14.83, "stopPct": 18.1, "t1": 24.68, "t2": 27.96, "t1pct": 36.3, "t2pct": 54.4, "ivw": 0, "target": 14.93, "thesis": "Consumo/beauty-tech: bounce +39% mas -72% da máxima histórica; analistas negativos (alvo -18%). Repique técnico."}, {"rank": 9, "t": "NVDA", "name": "NVIDIA", "sector": "Semis", "verdict": "HOLD", "score": 47.5, "mom": -0.82, "tech": -0.2, "flow": -0.05, "anal": 1.02, "valq": 0.52, "r21": 2.3, "r63": 5.6, "rsi": 54.4, "upside": 47.4, "bull": 0.85, "vol": 45.3, "risk": "Baixo", "spec": false, "cov": 62, "gbp": false, "price": 222.27, "sma20": 218.72, "sma50": 214.07, "disthi": -5.8, "pe": 28.1, "ps": 17.72, "eps": 7.91, "yld": 0.45, "mcap": 5356.7, "net": 3248.0, "atr": 5.915, "atrPct": 2.7, "stop": 210.44, "stopPct": 5.3, "t1": 245.93, "t2": 257.76, "t1pct": 10.6, "t2pct": 16.0, "ivw": 0, "target": 327.7, "thesis": "Bellwether consolidando: momentum curto esfriou (RSI 54), mas upside +47% e ratings excepcionais. Comprar em recuo às médias."}, {"rank": 10, "t": "INTC", "name": "Intel", "sector": "Semis", "verdict": "HOLD", "score": 47.2, "mom": -0.72, "tech": 0.5, "flow": 1.06, "anal": -0.54, "valq": -1.02, "r21": 17.0, "r63": -18.9, "rsi": 61.9, "upside": 7.2, "bull": 0.27, "vol": 59.5, "risk": "Médio", "spec": false, "cov": 49, "gbp": false, "price": 108.6, "sma20": 95.87, "sma50": 97.09, "disthi": -23.7, "pe": -51.2, "ps": 9.6, "eps": -2.12, "yld": 0.0, "mcap": 574.0, "net": 2469.0, "atr": 5.596, "atrPct": 5.2, "stop": 97.41, "stopPct": 10.3, "t1": 130.98, "t2": 142.18, "t1pct": 20.6, "t2pct": 30.9, "ivw": 0, "target": 116.37, "thesis": "Reviravolta especulativa: +17% no mês com fluxo forte, mas -19% em 3M, prejuízo e 32/49 em 'hold'. Trade tático, não tese."}, {"rank": 11, "t": "SDGR", "name": "Schrödinger", "sector": "Health/IA", "verdict": "HOLD", "score": 47.0, "mom": 1.2, "tech": 0.79, "flow": 1.0, "anal": -0.52, "valq": -1.02, "r21": 46.2, "r63": 84.1, "rsi": 77.3, "upside": -26.2, "bull": 0.71, "vol": 114.4, "risk": "Médio", "spec": true, "cov": 7, "gbp": false, "price": 29.02, "sma20": 21.22, "sma50": 18.44, "disthi": -4.6, "pe": -39.4, "ps": 8.38, "eps": -0.74, "yld": 0.0, "mcap": 2.17, "net": 9.0, "atr": 1.713, "atrPct": 5.9, "stop": 25.59, "stopPct": 11.8, "t1": 35.87, "t2": 39.3, "t1pct": 23.6, "t2pct": 35.4, "ivw": 0, "target": 21.43, "thesis": "Software de fármacos com IA; +84% em 3M e RSI 77 (esticado). Analistas gostam (5 SB) mas preço passou o alvo. Aguardar recuo."}, {"rank": 12, "t": "PLTR", "name": "Palantir", "sector": "Mega Tech", "verdict": "HOLD", "score": 45.9, "mom": -0.44, "tech": -0.11, "flow": 0.39, "anal": -0.08, "valq": -0.91, "r21": 1.4, "r63": 38.3, "rsi": 57.0, "upside": 10.8, "bull": 0.59, "vol": 50.5, "risk": "Médio", "spec": false, "cov": 32, "gbp": false, "price": 177.64, "sma20": 175.9, "sma50": 158.26, "disthi": -14.4, "pe": 151.4, "ps": 69.34, "eps": 1.17, "yld": 0.0, "mcap": 426.9, "net": 881.0, "atr": 7.111, "atrPct": 4.0, "stop": 163.42, "stopPct": 8.0, "t1": 206.08, "t2": 220.31, "t1pct": 16.0, "t2pct": 24.0, "ivw": 0, "target": 196.84, "thesis": "Momentum de médio prazo (+38% 3M) travado no curto; valuation extremo (P/S 69). Segurar."}, {"rank": 13, "t": "GOOGL", "name": "Alphabet", "sector": "Mega Tech", "verdict": "HOLD", "score": 45.7, "mom": -0.96, "tech": -0.14, "flow": 0.21, "anal": 0.43, "valq": 1.11, "r21": 1.5, "r63": -5.0, "rsi": 55.1, "upside": 22.5, "bull": 0.81, "vol": 22.6, "risk": "Baixo", "spec": false, "cov": 61, "gbp": false, "price": 349.54, "sma20": 341.68, "sma50": 345.4, "disthi": -14.3, "pe": 17.56, "ps": 9.59, "eps": 19.9, "yld": 0.25, "mcap": 4274.9, "net": 6286.0, "atr": 8.163, "atrPct": 2.3, "stop": 333.21, "stopPct": 4.7, "t1": 382.19, "t2": 398.52, "t1pct": 9.3, "t2pct": 14.0, "ivw": 0, "target": 428.16, "thesis": "O mais barato do grupo (P/E 17,6) e com fluxo comprador, mas curto lateral. Núcleo/segurar."}, {"rank": 14, "t": "TSM", "name": "Taiwan Semi (TSMC)", "sector": "Semis", "verdict": "HOLD", "score": 45.0, "mom": -0.86, "tech": -0.0, "flow": -0.18, "anal": 0.52, "valq": -0.07, "r21": 5.8, "r63": -5.7, "rsi": 57.6, "upside": 27.1, "bull": 0.81, "vol": 27.9, "risk": "Baixo", "spec": false, "cov": 21, "gbp": false, "price": 434.67, "sma20": 421.53, "sma50": 416.33, "disthi": -6.3, "pe": 31.68, "ps": 16.06, "eps": 13.72, "yld": 0.94, "mcap": 2254.4, "net": 422.0, "atr": 9.787, "atrPct": 2.3, "stop": 415.1, "stopPct": 4.5, "t1": 473.82, "t2": 493.39, "t1pct": 9.0, "t2pct": 13.5, "ivw": 0, "target": 552.26, "thesis": "Tendência intacta, upside +27%, mas momentum curto morno. Núcleo, não gatilho de swing."}, {"rank": 15, "t": "AAPL", "name": "Apple", "sector": "Mega Tech", "verdict": "SELL", "score": 44.3, "mom": -0.67, "tech": 0.04, "flow": 0.38, "anal": -0.59, "valq": 0.52, "r21": 6.1, "r63": 12.9, "rsi": 64.3, "upside": -2.4, "bull": 0.4, "vol": 21.3, "risk": "Baixo", "spec": false, "cov": 44, "gbp": false, "price": 336.13, "sma20": 322.64, "sma50": 320.03, "disthi": -2.4, "pe": 38.53, "ps": 10.52, "eps": 8.72, "yld": 0.32, "mcap": 4905.5, "net": 10065.0, "atr": 7.7, "atrPct": 2.3, "stop": 320.73, "stopPct": 4.6, "t1": 366.93, "t2": 382.33, "t1pct": 9.2, "t2pct": 13.7, "ivw": 0, "target": 328.22, "thesis": "Perto da máxima mas SEM upside (acima do alvo) e ratings mistos. Evitar entrada nova."}, {"rank": 16, "t": "SMMT", "name": "Summit Therapeutics", "sector": "Biotech", "verdict": "SELL", "score": 44.0, "mom": 0.17, "tech": 0.38, "flow": -3.65, "anal": 0.85, "valq": -1.02, "r21": 36.2, "r63": 29.8, "rsi": 64.3, "upside": 52.4, "bull": 0.62, "vol": 77.5, "risk": "Médio", "spec": false, "cov": 17, "gbp": true, "price": 17.85, "sma20": 15.84, "sma50": 14.66, "disthi": -38.9, "pe": -15.9, "ps": null, "eps": -1.12, "yld": 0.0, "mcap": 14.24, "net": -162.0, "atr": 0.971, "atrPct": 5.4, "stop": 15.91, "stopPct": 10.9, "t1": 21.73, "t2": 23.68, "t1pct": 21.8, "t2pct": 32.6, "ivw": 0, "target": 27.2, "thesis": "Biotech: +30% 3M, upside ~+52% (alvo em GBP — conferir). 10 SB, mas -39% da máxima. Especulativo/binário (pipeline)."}, {"rank": 17, "t": "ORCL", "name": "Oracle", "sector": "Mega Tech", "verdict": "SELL", "score": 43.6, "mom": -1.04, "tech": -0.69, "flow": -0.25, "anal": 1.15, "valq": 1.11, "r21": 2.6, "r63": -19.6, "rsi": 49.3, "upside": 61.2, "bull": 0.71, "vol": 51.1, "risk": "Médio", "spec": false, "cov": 43, "gbp": false, "price": 147.61, "sma20": 149.41, "sma50": 141.0, "disthi": -54.7, "pe": 23.14, "ps": 6.22, "eps": 6.38, "yld": 1.35, "mcap": 446.3, "net": -19.0, "atr": 8.236, "atrPct": 5.6, "stop": 131.14, "stopPct": 11.2, "t1": 180.55, "t2": 197.03, "t1pct": 22.3, "t2pct": 33.5, "ivw": 0, "target": 237.97, "thesis": "Quebrou: -20% em 3M, ~45% da máxima. Analistas veem +61% (valor?), mas p/ swing é faca caindo."}, {"rank": 18, "t": "TSLA", "name": "Tesla", "sector": "Mega Tech", "verdict": "SELL", "score": 42.7, "mom": -0.93, "tech": -0.22, "flow": 0.73, "anal": -0.43, "valq": 0.52, "r21": 3.7, "r63": -9.0, "rsi": 54.0, "upside": 9.0, "bull": 0.33, "vol": 47.9, "risk": "Médio", "spec": false, "cov": 43, "gbp": false, "price": 364.27, "sma20": 359.6, "sma50": 350.25, "disthi": -27.0, "pe": 338.4, "ps": 13.88, "eps": 1.08, "yld": 0.0, "mcap": 1438.7, "net": 4625.0, "atr": 14.208, "atrPct": 3.9, "stop": 335.85, "stopPct": 7.8, "t1": 421.1, "t2": 449.52, "t1pct": 15.6, "t2pct": 23.4, "ivw": 0, "target": 396.94, "thesis": "Sem tendência (-9% 3M), consenso morno (20 'hold'). Fluxo entrou, setup fraco."}, {"rank": 19, "t": "ASST", "name": "Strive", "sector": "Gestão/Cripto", "verdict": "SELL", "score": 42.4, "mom": 2.52, "tech": -0.78, "flow": 0.28, "anal": -0.0, "valq": -2.45, "r21": 104.3, "r63": 102.6, "rsi": 78.6, "upside": -2.3, "bull": 0.9, "vol": 82.2, "risk": "Alto", "spec": true, "cov": 5, "gbp": false, "price": 30.09, "sma20": 25.15, "sma50": 17.52, "disthi": -80.9, "pe": -1.71, "ps": 290, "eps": -17.6, "yld": 0.0, "mcap": 2.86, "net": 5.0, "atr": 2.14, "atrPct": 7.1, "stop": 25.81, "stopPct": 14.2, "t1": 38.65, "t2": 42.93, "t1pct": 28.4, "t2pct": 42.7, "ivw": 0, "target": 29.4, "thesis": "Cripto/gestão parabólica (+102% 3M, RSI 79) e sem fundamento (P/S 290, prejuízo). Exagero — evitar."}, {"rank": 20, "t": "HAFN", "name": "Hafnia", "sector": "Shipping", "verdict": "SELL", "score": 41.6, "mom": 0.41, "tech": -1.14, "flow": -0.21, "anal": -0.08, "valq": 1.11, "r21": 35.3, "r63": 48.0, "rsi": 86.3, "upside": 1.3, "bull": 0.5, "vol": 36.9, "risk": "Baixo", "spec": false, "cov": 2, "gbp": false, "price": 10.12, "sma20": 8.66, "sma50": 7.75, "disthi": 0.0, "pe": 7.76, "ps": 1.9, "eps": 1.3, "yld": 10.98, "mcap": 5.06, "net": 0.0, "atr": 0.285, "atrPct": 2.8, "stop": 9.55, "stopPct": 5.6, "t1": 11.26, "t2": 11.83, "t1pct": 11.3, "t2pct": 16.9, "ivw": 0, "target": 10.25, "thesis": "Shipping esticado (RSI 86) e já no alvo. Dividendo ~11% atrai, mas não perseguir — aguardar recuo."}, {"rank": 21, "t": "AVGO", "name": "Broadcom", "sector": "Semis", "verdict": "SELL", "score": 40.8, "mom": -1.15, "tech": -0.85, "flow": -0.1, "anal": 1.06, "valq": -0.07, "r21": -1.3, "r63": -12.9, "rsi": 45.7, "upside": 48.7, "bull": 0.87, "vol": 33.3, "risk": "Baixo", "spec": false, "cov": 50, "gbp": false, "price": 357.61, "sma20": 359.32, "sma50": 379.75, "disthi": -27.6, "pe": 45.65, "ps": 19.16, "eps": 7.83, "yld": 0.73, "mcap": 1707.1, "net": 780.0, "atr": 11.031, "atrPct": 3.1, "stop": 335.55, "stopPct": 6.2, "t1": 401.73, "t2": 423.8, "t1pct": 12.3, "t2pct": 18.5, "ivw": 0, "target": 531.85, "thesis": "Elo fraco dos semis: abaixo da SMA50, RSI 46, sem momentum. Upside de alvo não compensa a fraqueza."}, {"rank": 22, "t": "TRMD", "name": "Torm", "sector": "Shipping", "verdict": "SELL", "score": 35.7, "mom": 0.27, "tech": -0.94, "flow": -0.61, "anal": -0.1, "valq": 1.11, "r21": 32.5, "r63": 39.6, "rsi": 80.2, "upside": -4.5, "bull": 0.5, "vol": 46.4, "risk": "Médio", "spec": false, "cov": 2, "gbp": false, "price": 38.23, "sma20": 32.67, "sma50": 29.65, "disthi": -1.3, "pe": 6.3, "ps": 2.22, "eps": 6.07, "yld": 11.56, "mcap": 3.92, "net": -5.0, "atr": 1.513, "atrPct": 4.0, "stop": 35.2, "stopPct": 7.9, "t1": 44.28, "t2": 47.31, "t1pct": 15.8, "t2pct": 23.7, "ivw": 0, "target": 36.5, "thesis": "Shipping esticado (RSI 80) e acima do alvo. Div. 11,6% e P/E 6 são valor, não swing."}, {"rank": 23, "t": "TWST", "name": "Twist Bioscience", "sector": "Biotech", "verdict": "SELL", "score": 31.6, "mom": 0.61, "tech": 0.31, "flow": -0.51, "anal": -1.08, "valq": -1.62, "r21": 17.3, "r63": 90.7, "rsi": 73.0, "upside": -34.4, "bull": 0.58, "vol": 70.1, "risk": "Médio", "spec": false, "cov": 13, "gbp": false, "price": 166.99, "sma20": 139.2, "sma50": 118.31, "disthi": -0.0, "pe": -75.1, "ps": 24.24, "eps": -2.22, "yld": 0.0, "mcap": 11.0, "net": -10.0, "atr": 9.906, "atrPct": 5.9, "stop": 147.18, "stopPct": 11.9, "t1": 206.61, "t2": 226.43, "t1pct": 23.7, "t2pct": 35.6, "ivw": 0, "target": 109.58, "thesis": "+91% em 3M e ~34% ACIMA do alvo, prejuízo, P/S 24. Exagero — realizar/não perseguir."}, {"rank": 24, "t": "CVI", "name": "CVR Energy", "sector": "Energia", "verdict": "SELL", "score": 31.1, "mom": 1.15, "tech": -0.92, "flow": -0.19, "anal": -1.39, "valq": 0.52, "r21": 46.3, "r63": 96.6, "rsi": 81.4, "upside": -37.8, "bull": -0.42, "vol": 50.3, "risk": "Médio", "spec": false, "cov": 6, "gbp": false, "price": 53.69, "sma20": 45.33, "sma50": 38.6, "disthi": -1.7, "pe": 78.2, "ps": 0.64, "eps": 0.69, "yld": 0.75, "mcap": 5.4, "net": 1.0, "atr": 2.654, "atrPct": 4.9, "stop": 48.38, "stopPct": 9.9, "t1": 64.31, "t2": 69.61, "t1pct": 19.8, "t2pct": 29.7, "ivw": 0, "target": 33.4, "thesis": "Refino disparou (+96% 3M) mas RSI 81 e ~38% ACIMA do alvo, com analistas negativos (3 sell/0 buy). Rally esticado — evitar chase."}], "counts": {"BUY": 3, "HOLD": 11, "SELL": 10}, "weights": {"mom": 0.35, "tech": 0.25, "flow": 0.15, "anal": 0.2, "valq": 0.05}, "asof": "18 set 2026 (fechamento)", "n": 24, "buys": ["PURR", "SECZ", "SMTC"]};
+const $=(s,e=document)=>e.querySelector(s),$$=(s,e=document)=>[...e.querySelectorAll(s)];
 const fmt=(x,d=1)=>x==null?"–":(x>0&&d>0?"+":"")+Number(x).toFixed(d);
-const rows=DATA.rows;
+const usd=x=>"$"+Number(x).toLocaleString("en-US",{maximumFractionDigits:x<10?2:0});
+const rows=DATA.rows, byT=t=>rows.find(r=>r.t===t);
+const vlabel=v=>({BUY:"Compra",HOLD:"Manter",SELL:"Evitar"})[v];
+const wmeta={mom:["Momentum","Retornos 1M/3M + preço vs SMA50"],tech:["Técnico","RSI(14) + preço vs SMA20"],flow:["Fluxo de capital","Ordens grandes+médias líquidas"],anal:["Analistas","Upside + ratings × confiança"],valq:["Valuation","P/E · P/S · EPS (sanidade)"]};
 
-/* as-of + tiles */
 $("#asof").textContent="Dados: "+DATA.asof;
-const leadSemis=rows.filter(r=>r.sector.startsWith("Semis")).length;
+const semis=rows.filter(r=>r.sector==="Semis").length;
 $("#tiles").innerHTML=[
- {k:"Universo analisado",v:DATA.n,m:"ações líquidas · screening de mercado",c:""},
+ {k:"Universo",v:DATA.n,m:"16 large + 8 mid-caps · 8 setores",c:""},
  {k:"Compra",v:DATA.counts.BUY,m:"setups mais fortes",c:"buy"},
  {k:"Manter",v:DATA.counts.HOLD,m:"neutros / aguardar",c:"hold"},
- {k:"Evitar",v:DATA.counts.SELL,m:"fracos ou esticados",c:"sell"},
- {k:"Tema líder",v:leadSemis+"/16",m:"Semicondutores no topo",c:""},
+ {k:"Evitar",v:DATA.counts.SELL,m:"fracos, esticados ou parabólicos",c:"sell"},
+ {k:"Especulativos",v:rows.filter(r=>r.spec).length,m:"cripto / recém-listadas",c:""},
 ].map(t=>`<div class="tile ${t.c}"><div class="k">${t.k}</div><div class="v mono">${t.v}</div><div class="m">${t.m}</div></div>`).join("");
 
-/* weights */
-const wmeta={mom:["Momentum","Retornos 1M/3M + preço vs SMA50"],tech:["Técnico","RSI(14) + preço vs SMA20"],
- flow:["Fluxo de capital","Ordens grandes+médias líquidas"],anal:["Analistas","Upside ao alvo + ratings"],valq:["Valuation","P/E · P/S · EPS (sanidade)"]};
-$("#wgrid").innerHTML=Object.entries(DATA.weights).map(([k,v])=>
- `<div class="wcell"><div class="p mono">${Math.round(v*100)}%</div><div class="n">${wmeta[k][0]}</div><div class="d">${wmeta[k][1]}</div></div>`).join("");
+$("#wgrid").innerHTML=Object.entries(DATA.weights).map(([k,v])=>`<div class="wcell"><div class="p mono">${Math.round(v*100)}%</div><div class="n">${wmeta[k][0]}</div><div class="d">${wmeta[k][1]}</div></div>`).join("");
 
-/* chart */
-const CMIN=34,CMAX=68, sx=v=>Math.max(0,Math.min(100,(v-CMIN)/(CMAX-CMIN)*100));
+const CMIN=30,CMAX=72,sx=v=>Math.max(0,Math.min(100,(v-CMIN)/(CMAX-CMIN)*100));
 function drawChart(list){
  const el=$("#chart");
- const bars=list.map(r=>`<div class="crow" data-t="${r.t}">
-   <div class="tk">${r.t}<small>${r.name.length>13?r.name.slice(0,12)+"…":r.name}</small></div>
-   <div class="track">
-     <div class="thr" style="left:${sx(45)}%"><b>45</b></div>
-     <div class="thr" style="left:${sx(55)}%"><b>55</b></div>
-     <div class="bar ${r.verdict}" style="width:${sx(r.score)}%"></div>
-   </div>
-   <div class="sc mono ${r.verdict==='BUY'?'pos':r.verdict==='SELL'?'neg':''}">${r.score.toFixed(1)}</div>
- </div>`).join("");
- el.innerHTML=bars+`<div class="crow"><div></div><div class="axis"><span>${CMIN}</span><span>evitar ◂ 45</span><span>55 ▸ compra</span><span>${CMAX}</span></div><div></div></div>`;
- $$(".crow[data-t]",el).forEach(row=>{
-   const r=rows.find(x=>x.t===row.dataset.t);
-   row.addEventListener("mousemove",e=>tip(e,`<div class="h">${r.t} · ${r.name}</div>Score ${r.score.toFixed(1)} — <b>${vlabel(r.verdict)}</b><br>1M ${fmt(r.r21)}% · 3M ${fmt(r.r63)}% · RSI ${r.rsi}<br>Upside alvo ${fmt(r.upside)}%`));
-   row.addEventListener("mouseleave",untip);
- });
+ el.innerHTML=list.map(r=>`<div class="crow" data-t="${r.t}">
+   <div class="tk">${r.t}${r.spec?'<span class="sbadge">⚠</span>':''}<small>${r.name.length>13?r.name.slice(0,12)+'…':r.name}</small></div>
+   <div class="track"><div class="thr" style="left:${sx(45)}%"><b>45</b></div><div class="thr" style="left:${sx(55)}%"><b>55</b></div><div class="bar ${r.verdict}" style="width:${sx(r.score)}%"></div></div>
+   <div class="sc mono ${r.verdict==='BUY'?'pos':r.verdict==='SELL'?'neg':''}">${r.score.toFixed(1)}</div></div>`).join("")
+   +`<div class="crow"><div></div><div class="axis"><span>${CMIN}</span><span>evitar ◂ 45</span><span>55 ▸ compra</span><span>${CMAX}</span></div><div></div></div>`;
+ $$(".crow[data-t]",el).forEach(row=>{const r=byT(row.dataset.t);
+   row.addEventListener("mousemove",e=>tip(e,`<div class="h">${r.t} · ${r.name}${r.spec?' ⚠':''}</div>Score ${r.score.toFixed(1)} — <b>${vlabel(r.verdict)}</b><br>1M ${fmt(r.r21)}% · 3M ${fmt(r.r63)}% · RSI ${r.rsi}<br>Upside ${fmt(r.upside)}% · ATR ${r.atrPct}%`));
+   row.addEventListener("mouseleave",untip);});
 }
-const vlabel=v=>({BUY:"Compra",HOLD:"Manter",SELL:"Evitar"})[v];
 
-/* table */
 let sortKey="rank",sortDir=1;
 function drawTable(list){
- const tb=$("#tbody");
- tb.innerHTML=list.map(r=>{
-  const fs=["mom","tech","flow","anal"].map(k=>{
-    const z=r[k],w=Math.min(50,Math.abs(z)/2.5*50);
-    return `<span class="fb" data-k="${k}" data-z="${z}"><i></i><s class="${z>=0?'p':'n'}" style="width:${w}%"></s></span>`;
-  }).join("");
-  return `<tr data-t="${r.t}">
-   <td class="rk mono">${r.rank}</td>
-   <td class="l"><span class="tkr">${r.t}<small>${r.name}</small></span></td>
+ $("#tbody").innerHTML=list.map(r=>{
+  const fs=["mom","tech","flow","anal"].map(k=>{const z=r[k],w=Math.min(50,Math.abs(z)/2.5*50);return `<span class="fb" data-k="${k}" data-z="${z}"><i></i><s class="${z>=0?'p':'n'}" style="width:${w}%"></s></span>`}).join("");
+  return `<tr data-t="${r.t}"><td class="rk mono">${r.rank}</td>
+   <td class="l"><span class="tkr">${r.t}${r.spec?'<span class="sbadge">⚠ ESP</span>':''}<small>${r.name}</small></span></td>
    <td class="l" style="color:var(--muted);font-size:12px">${r.sector}</td>
    <td><span class="pill ${r.verdict}">${vlabel(r.verdict)}</span></td>
    <td class="scv mono">${r.score.toFixed(1)}</td>
@@ -319,87 +284,95 @@ function drawTable(list){
    <td class="mono ${r.r63>=0?'pos':'neg'}">${fmt(r.r63)}</td>
    <td class="mono" style="color:${r.rsi>=78?'var(--sell)':r.rsi>=50?'var(--ink)':'var(--muted)'}">${r.rsi}</td>
    <td class="mono ${r.upside>=0?'pos':'neg'}">${fmt(r.upside)}</td>
-   <td><span class="rsk">${r.risk}</span></td>
-  </tr>`;
+   <td class="mono" style="color:var(--muted)">${r.atrPct}</td>
+   <td><span class="rsk ${r.risk}">${r.risk}</span></td></tr>`;
  }).join("");
- // factor tooltip + row expand
- $$("#tbody tr").forEach(tr=>{
-   const r=rows.find(x=>x.t===tr.dataset.t);
+ $$("#tbody tr").forEach(tr=>{const r=byT(tr.dataset.t);
    tr.addEventListener("click",()=>toggleDetail(tr,r));
-   $$(".fb",tr).forEach(fb=>{
-     fb.addEventListener("mousemove",e=>{e.stopPropagation();tip(e,`<div class="h">${wmeta[fb.dataset.k][0]}</div>z = ${fmt(+fb.dataset.z,2)}<br><span style="color:var(--faint)">${wmeta[fb.dataset.k][1]}</span>`)});
-     fb.addEventListener("mouseleave",untip);
-   });
+   $$(".fb",tr).forEach(fb=>{fb.addEventListener("mousemove",e=>{e.stopPropagation();tip(e,`<div class="h">${wmeta[fb.dataset.k][0]}</div>z = ${fmt(+fb.dataset.z,2)}<br><span style="color:var(--faint)">${wmeta[fb.dataset.k][1]}</span>`)});fb.addEventListener("mouseleave",untip)});
  });
 }
 function toggleDetail(tr,r){
  const nx=tr.nextElementSibling;
- if(nx&&nx.classList.contains("detail")){nx.remove();return;}
+ if(nx&&nx.classList.contains("detail")){nx.remove();return}
  $$(".detail").forEach(d=>d.remove());
  const tr2=document.createElement("tr");tr2.className="detail";
- const entry = r.verdict==='BUY' ? `Gatilho acima de <b class="mono">$${r.price}</b> · recuo ideal p/ SMA20 <b class="mono">$${r.sma20}</b>` :
-   r.verdict==='HOLD' ? `Aguardar recuo à SMA20 <b class="mono">$${r.sma20}</b> ou rompimento com volume` :
-   `Sem setup de compra — invalida abaixo da SMA50 <b class="mono">$${r.sma50}</b>`;
- tr2.innerHTML=`<td colspan="11"><div class="dbox">
+ tr2.innerHTML=`<td colspan="12"><div class="dbox">
    <div><p>${r.thesis}</p>
-     <p style="font-size:12.5px;color:var(--muted)">${entry}${r.reason?` · <span style="color:var(--sell)">${r.reason}</span>`:""}</p></div>
+     <div class="plan">
+       <div class="pchip"><div class="k">Entrada ref.</div><div class="v mono">$${r.price}</div></div>
+       <div class="pchip stop"><div class="k">Stop 2×ATR</div><div class="v mono">$${r.stop} <span style="font-size:10px">(${r.stopPct}%)</span></div></div>
+       <div class="pchip t1"><div class="k">Alvo 1 · 2R</div><div class="v mono">$${r.t1} <span style="font-size:10px">(+${r.t1pct}%)</span></div></div>
+       <div class="pchip t2"><div class="k">Alvo 2 · 3R</div><div class="v mono">$${r.t2} <span style="font-size:10px">(+${r.t2pct}%)</span></div></div>
+       <div class="pchip"><div class="k">Recuo SMA20</div><div class="v mono">$${r.sma20}</div></div>
+     </div></div>
    <div class="kv">
-     <span class="k">Preço</span><span class="v mono">$${r.price}</span>
      <span class="k">SMA20 / SMA50</span><span class="v mono">${r.sma20} / ${r.sma50}</span>
      <span class="k">Dist. máx 52s</span><span class="v mono">${fmt(r.disthi)}%</span>
-     <span class="k">RSI(14)</span><span class="v mono">${r.rsi}</span>
+     <span class="k">RSI(14) · ATR%</span><span class="v mono">${r.rsi} · ${r.atrPct}%</span>
      <span class="k">Volat. anual.</span><span class="v mono">${r.vol}%</span>
-     <span class="k">Upside alvo</span><span class="v mono">${fmt(r.upside)}%</span>
-     <span class="k">Rating (bull)</span><span class="v mono">${fmt(r.bull,2)}</span>
-     <span class="k">Fluxo líq. 3d</span><span class="v mono">$${(r.netflow/1000).toFixed(2)}B</span>
-     <span class="k">P/E · P/S</span><span class="v mono">${r.pe} · ${r.ps}</span>
-     <span class="k">Div. yield</span><span class="v mono">${r.yld}%</span>
-     <span class="k">Cap. mercado</span><span class="v mono">$${r.mcap>=1000?(r.mcap/1000).toFixed(2)+"T":r.mcap.toFixed(1)+"B"}</span>
+     <span class="k">Upside alvo</span><span class="v mono">${fmt(r.upside)}%${r.gbp?' *GBP':''}</span>
+     <span class="k">Analistas (cob.)</span><span class="v mono">${r.cov}</span>
+     <span class="k">Fluxo líq. 3d</span><span class="v mono">$${(r.net/1000).toFixed(2)}B</span>
+     <span class="k">P/E · P/S</span><span class="v mono">${r.pe==null?'–':r.pe} · ${r.ps==null?'–':r.ps}</span>
+     <span class="k">Cap. mercado</span><span class="v mono">$${r.mcap>=1000?(r.mcap/1000).toFixed(2)+'T':r.mcap.toFixed(1)+'B'}</span>
    </div></div></td>`;
  tr.after(tr2);
 }
 
-/* cards */
+// cards
 $("#cards").innerHTML=rows.filter(r=>r.verdict==='BUY').map(r=>`
- <div class="pcard"><div class="top">
-   <div class="nm">${r.t}<small>${r.name} · ${r.sector}</small></div>
+ <div class="pcard ${r.spec?'spec':''}"><div class="top">
+   <div class="nm">${r.t}${r.spec?'<span class="sbadge">⚠ ESP</span>':''}<small>${r.name} · ${r.sector}</small></div>
    <span class="pill BUY">Compra</span></div>
    <div class="th">${r.thesis}</div>
    <div class="lv">
-     <div class="lvl"><div class="k">Score</div><div class="v mono">${r.score.toFixed(1)}</div></div>
-     <div class="lvl"><div class="k">Preço</div><div class="v mono">$${r.price}</div></div>
-     <div class="lvl"><div class="k">Recuo SMA20</div><div class="v mono">$${r.sma20}</div></div>
-     <div class="lvl"><div class="k">Risco</div><div class="v mono">${r.risk}</div></div>
+     <div class="lvl"><div class="k">Entrada</div><div class="v mono">$${r.price}</div></div>
+     <div class="lvl st"><div class="k">Stop</div><div class="v mono">$${r.stop}</div></div>
+     <div class="lvl tg"><div class="k">Alvo 1</div><div class="v mono">$${r.t1}</div></div>
+     <div class="lvl"><div class="k">Peso vol</div><div class="v mono">${r.ivw}%</div></div>
    </div></div>`).join("");
 
-/* filters */
+// plan table
+let planFilter="BUY";
+function drawPlan(){
+ const acct=Math.max(1,+$("#acct").value||0), rp=Math.max(0,+$("#riskpct").value||0)/100;
+ const list=(planFilter==="BUY"?rows.filter(r=>r.verdict==='BUY'):rows);
+ $("#planbody").innerHTML=list.map(r=>{
+   const rpsh=r.price-r.stop, sh=rpsh>0?Math.floor(acct*rp/rpsh):0, posv=sh*r.price, posp=acct>0?posv/acct*100:0;
+   const over=posp>30;
+   return `<tr>
+     <td class="l"><span class="tkr" style="font-size:12px">${r.t}${r.spec?'<span class="sbadge">⚠</span>':''}</span> <span class="pill ${r.verdict}" style="min-width:0;font-size:9.5px;padding:2px 6px">${vlabel(r.verdict)}</span></td>
+     <td class="mono">$${r.price}</td>
+     <td class="mono neg">$${r.stop}</td>
+     <td class="mono neg">-${r.stopPct}%</td>
+     <td class="mono pos">$${r.t1}</td>
+     <td class="mono pos">$${r.t2}</td>
+     <td class="mono" style="color:var(--muted)">$${r.target}</td>
+     <td class="mono">${r.ivw>0?r.ivw+'%':'–'}</td>
+     <td class="mono" style="font-weight:600">${sh.toLocaleString('en-US')}</td>
+     <td class="mono">${usd(posv)}</td>
+     <td class="mono" style="color:${over?'var(--sell)':'var(--ink2)'}">${posp.toFixed(1)}%${over?' ⚠':''}</td></tr>`;
+ }).join("");
+}
+$("#acct").addEventListener("input",drawPlan);$("#riskpct").addEventListener("input",drawPlan);
+$$("#planfilter .fbtn").forEach(b=>b.addEventListener("click",()=>{planFilter=b.dataset.pf;$$("#planfilter .fbtn").forEach(x=>x.setAttribute("aria-pressed",x===b));drawPlan()}));
+
+// main filters + sort
 let filter="ALL";
 function apply(){
- const list=(filter==="ALL"?rows:rows.filter(r=>r.verdict===filter))
-   .slice().sort((a,b)=> (a[sortKey]>b[sortKey]?1:-1)*sortDir);
- drawChart(filter==="ALL"?rows.slice().sort((a,b)=>b.score-a.score):list.slice().sort((a,b)=>b.score-a.score));
+ const base=filter==="ALL"?rows:rows.filter(r=>r.verdict===filter);
+ const list=base.slice().sort((a,b)=>(a[sortKey]>b[sortKey]?1:-1)*sortDir);
+ drawChart(base.slice().sort((a,b)=>b.score-a.score));
  drawTable(list);
 }
-$$("#filters .fbtn").forEach(b=>b.addEventListener("click",()=>{
- filter=b.dataset.f;$$("#filters .fbtn").forEach(x=>x.setAttribute("aria-pressed",x===b));apply();
-}));
-$$("#tbl th").forEach(th=>th.addEventListener("click",()=>{
- const k=th.dataset.s; if(k===sortKey)sortDir*=-1; else{sortKey=k;sortDir=(k==="t"||k==="sector"||k==="rank")?1:-1;}
- apply();
-}));
+$$("#filters .fbtn").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.f;$$("#filters .fbtn").forEach(x=>x.setAttribute("aria-pressed",x===b));apply()}));
+$$("#tbl th").forEach(th=>th.addEventListener("click",()=>{const k=th.dataset.s;if(k===sortKey)sortDir*=-1;else{sortKey=k;sortDir=(k==="t"||k==="sector"||k==="rank")?1:-1}apply()}));
 
-/* tooltip */
 const tt=$("#tt");
-function tip(e,html){tt.innerHTML=html;tt.style.opacity=1;
- let x=e.clientX+14,y=e.clientY+14; if(x>innerWidth-250)x=e.clientX-250; tt.style.left=x+"px";tt.style.top=y+"px";}
-function untip(){tt.style.opacity=0;}
+function tip(e,html){tt.innerHTML=html;tt.style.opacity=1;let x=e.clientX+14,y=e.clientY+14;if(x>innerWidth-250)x=e.clientX-250;tt.style.left=x+"px";tt.style.top=y+"px"}
+function untip(){tt.style.opacity=0}
+$("#theme").addEventListener("click",()=>{const cur=document.documentElement.getAttribute("data-theme");const dark=cur?cur==="dark":matchMedia("(prefers-color-scheme:dark)").matches;document.documentElement.setAttribute("data-theme",dark?"light":"dark")});
 
-/* theme toggle */
-$("#theme").addEventListener("click",()=>{
- const cur=document.documentElement.getAttribute("data-theme");
- const dark=cur? cur==="dark" : matchMedia("(prefers-color-scheme:dark)").matches;
- document.documentElement.setAttribute("data-theme",dark?"light":"dark");
-});
-
-apply();
+apply();drawPlan();
 </script>
