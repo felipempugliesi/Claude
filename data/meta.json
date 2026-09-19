@@ -1,0 +1,203 @@
+{
+ "tickers": [
+  "NVDA",
+  "AMD",
+  "INTC",
+  "MU",
+  "TSM",
+  "AVGO",
+  "META",
+  "GOOGL",
+  "AAPL",
+  "ORCL",
+  "PLTR",
+  "TSLA",
+  "SMTC",
+  "TWST",
+  "HAFN",
+  "TRMD",
+  "CVI",
+  "SDGR",
+  "SMMT",
+  "ODD",
+  "FRNM",
+  "SECZ",
+  "ASST",
+  "PURR",
+  "HALO",
+  "DBX",
+  "OSCR",
+  "TXG",
+  "IOVA",
+  "PBF",
+  "MG",
+  "INFU"
+ ],
+ "gbp": [
+  "SMMT"
+ ],
+ "meta": {
+  "NVDA": {
+   "name": "NVIDIA",
+   "sector": "Semis"
+  },
+  "AMD": {
+   "name": "Advanced Micro Devices",
+   "sector": "Semis"
+  },
+  "INTC": {
+   "name": "Intel",
+   "sector": "Semis"
+  },
+  "MU": {
+   "name": "Micron",
+   "sector": "Semis"
+  },
+  "TSM": {
+   "name": "Taiwan Semi (TSMC)",
+   "sector": "Semis"
+  },
+  "AVGO": {
+   "name": "Broadcom",
+   "sector": "Semis"
+  },
+  "META": {
+   "name": "Meta Platforms",
+   "sector": "Mega Tech"
+  },
+  "GOOGL": {
+   "name": "Alphabet",
+   "sector": "Mega Tech"
+  },
+  "AAPL": {
+   "name": "Apple",
+   "sector": "Mega Tech"
+  },
+  "ORCL": {
+   "name": "Oracle",
+   "sector": "Mega Tech"
+  },
+  "PLTR": {
+   "name": "Palantir",
+   "sector": "Mega Tech"
+  },
+  "TSLA": {
+   "name": "Tesla",
+   "sector": "Mega Tech"
+  },
+  "SMTC": {
+   "name": "Semtech",
+   "sector": "Semis"
+  },
+  "TWST": {
+   "name": "Twist Bioscience",
+   "sector": "Biotech"
+  },
+  "HAFN": {
+   "name": "Hafnia",
+   "sector": "Shipping"
+  },
+  "TRMD": {
+   "name": "Torm",
+   "sector": "Shipping"
+  },
+  "CVI": {
+   "name": "CVR Energy",
+   "sector": "Energia"
+  },
+  "SDGR": {
+   "name": "Schrödinger",
+   "sector": "Health/IA"
+  },
+  "SMMT": {
+   "name": "Summit Therapeutics",
+   "sector": "Biotech"
+  },
+  "ODD": {
+   "name": "Oddity Tech",
+   "sector": "Consumo"
+  },
+  "FRNM": {
+   "name": "Freenome",
+   "sector": "Diagnóstico"
+  },
+  "SECZ": {
+   "name": "Securitize",
+   "sector": "Fintech"
+  },
+  "ASST": {
+   "name": "Strive",
+   "sector": "Gestão/Cripto"
+  },
+  "PURR": {
+   "name": "Hyperliquid Strat.",
+   "sector": "Cripto"
+  },
+  "HALO": {
+   "name": "Halozyme",
+   "sector": "Biopharma"
+  },
+  "DBX": {
+   "name": "Dropbox",
+   "sector": "Software"
+  },
+  "OSCR": {
+   "name": "Oscar Health",
+   "sector": "Health Insur."
+  },
+  "TXG": {
+   "name": "10x Genomics",
+   "sector": "Life Sciences"
+  },
+  "IOVA": {
+   "name": "Iovance",
+   "sector": "Biotech"
+  },
+  "PBF": {
+   "name": "PBF Energy",
+   "sector": "Energia"
+  },
+  "MG": {
+   "name": "Mistras Group",
+   "sector": "Industrial"
+  },
+  "INFU": {
+   "name": "InfuSystem",
+   "sector": "Saúde (micro)"
+  }
+ },
+ "thesis": {
+  "NVDA": "Bellwether consolidando: momentum curto esfriou (RSI 54), mas upside +47% e ratings excepcionais. Comprar em recuo às médias.",
+  "AMD": "Semis em aceleração; RSI 65 saudável, acima das médias 20/50 e forte fluxo institucional. Aguardar leve recuo p/ entrada de menor risco.",
+  "INTC": "Reviravolta especulativa: +17% no mês com fluxo forte, mas -19% em 3M, prejuízo e 32/49 em 'hold'. Trade tático, não tese.",
+  "MU": "Memória em ciclo forte: fluxo comprador pesado e upside +49% ao alvo; EPS_TTM robusto. Correção de 3M digerida — quase-compra.",
+  "TSM": "Tendência intacta, upside +27%, mas momentum curto morno. Núcleo, não gatilho de swing.",
+  "AVGO": "Elo fraco dos semis: abaixo da SMA50, RSI 46, sem momentum. Upside de alvo não compensa a fraqueza.",
+  "META": "+22% no mês e acima das médias; ruído de saída institucional pontual. Fundamento sólido (P/E 25). Watch p/ rompimento.",
+  "GOOGL": "O mais barato do grupo (P/E 17,6) e com fluxo comprador, mas curto lateral. Núcleo/segurar.",
+  "AAPL": "Perto da máxima mas SEM upside (acima do alvo) e ratings mistos. Evitar entrada nova.",
+  "ORCL": "Quebrou: -20% em 3M, ~45% da máxima. Analistas veem +61% (valor?), mas p/ swing é faca caindo.",
+  "PLTR": "Momentum de médio prazo (+38% 3M) travado no curto; valuation extremo (P/S 69). Segurar.",
+  "TSLA": "Sem tendência (-9% 3M), consenso morno (20 'hold'). Fluxo entrou, setup fraco.",
+  "SMTC": "Compra de maior qualidade do grupo: +48% no mês rompendo máxima de 52s, 15 analistas (14 compra), fluxo ok. Vol. alta — respeite o sizing.",
+  "TWST": "+91% em 3M e ~34% ACIMA do alvo, prejuízo, P/S 24. Exagero — realizar/não perseguir.",
+  "HAFN": "Shipping esticado (RSI 86) e já no alvo. Dividendo ~11% atrai, mas não perseguir — aguardar recuo.",
+  "TRMD": "Shipping esticado (RSI 80) e acima do alvo. Div. 11,6% e P/E 6 são valor, não swing.",
+  "CVI": "Refino disparou (+96% 3M) mas RSI 81 e ~38% ACIMA do alvo, com analistas negativos (3 sell/0 buy). Rally esticado — evitar chase.",
+  "SDGR": "Software de fármacos com IA; +84% em 3M e RSI 77 (esticado). Analistas gostam (5 SB) mas preço passou o alvo. Aguardar recuo.",
+  "SMMT": "Biotech: +30% 3M, upside ~+52% (alvo em GBP — conferir). 10 SB, mas -39% da máxima. Especulativo/binário (pipeline).",
+  "ODD": "Consumo/beauty-tech: bounce +39% mas -72% da máxima histórica; analistas negativos (alvo -18%). Repique técnico.",
+  "FRNM": "Diagnóstico recém-listado na máxima; 5 casas strong buy. Cobertura fina e sem lucro — momentum de IPO, risco alto.",
+  "SECZ": "ESPECULATIVA: fintech de tokenização (+80% no mês) rompendo com fluxo comprador. Recém-listada, P/E 109, cobertura fina — momentum com stop curto.",
+  "ASST": "Cripto/gestão parabólica (+102% 3M, RSI 79) e sem fundamento (P/S 290, prejuízo). Exagero — evitar.",
+  "PURR": "ESPECULATIVA pura: cripto-treasury (Hyperliquid) na máxima; momentum forte, analistas veem +58%. Aposta alavancada em cripto — sizing pequeno e stop rígido.",
+  "HALO": "Biopharma de royalties/entrega de fármacos, LUCRATIVA (P/E 34) e na máxima de 52s. Mas o preço já passou o alvo médio e o fluxo saiu no dia forte — qualidade com entrada esticada.",
+  "DBX": "Software lucrativo e barato (P/E 16), porém momentum curto fraco, ratings mornos (4 hold) e acima do alvo. Segurar/observar, não comprar aqui.",
+  "OSCR": "Health insurance que virou lucrativa (+200% da mínima), P/S 0,65 e upside +10%. Mas o curto prazo travou (1M ~0%) — qualidade aguardando novo gatilho.",
+  "TXG": "Ferramentas de genômica: +120% em 3M (parabólica) e ~32% ACIMA do alvo, sem lucro. Momentum forte mas esticado — evitar perseguir.",
+  "IOVA": "Terapia celular: +162% em 3M e já no alvo, sem lucro (biotech binário). Momentum especulativo e esticado — não é entrada de qualidade.",
+  "PBF": "Refino deep-value (P/E 6,9, P/S 0,27) e +108% em 3M, mas ratings negativos (3 sell/9 hold) e acima do alvo. Valor cíclico esticado, não swing limpo.",
+  "MG": "SMALL-CAP DE QUALIDADE: testes/inspeção industrial, lucrativa (P/E 25), na máxima de 52s, upside +11%. Cobertura mínima (1 casa) e float pequeno — monitorar recuo p/ entrada.",
+  "INFU": "⚠ MICRO-CAP: serviços de infusão, lucrativa (P/E 31) e maior upside da lista (+31%). Baixa liquidez e spread largo — só ordem limitada e posição pequena."
+ }
+}

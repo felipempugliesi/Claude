@@ -1,6 +1,6 @@
-import json
-BASE="/tmp/claude-0/-home-user-Claude/acfda38c-f805-5d0e-9f01-51d2c4d57305/scratchpad/"
-payload=open(BASE+"payload2.json").read()
+import json, os
+ROOT=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+payload=open(os.path.join(ROOT,"data","payload.json"),encoding="utf-8").read()
 HTML = r'''<title>Radar Swing Quant</title>
 <meta name="description" content="Análise quantitativa buy/hold/sell de 24 ações americanas com stops, alvos e sizing, via terminal Webull.">
 <style>
@@ -412,5 +412,5 @@ $("#theme").addEventListener("click",()=>{const cur=document.documentElement.get
 apply();
 </script>'''
 HTML=HTML.replace("__PAYLOAD__",payload)
-open("/home/user/Claude/dashboard.html","w").write(HTML)
-print("written",len(HTML))
+open(os.path.join(ROOT,"dashboard.html"),"w",encoding="utf-8").write(HTML)
+print("dashboard.html written",len(HTML),"bytes")

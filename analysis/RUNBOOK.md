@@ -1,47 +1,51 @@
-# Radar Swing Quant — Runbook do check-in diário
+# Radar Swing Quant — Runbook do check-in diário (pipeline data-driven)
 
 Reprocessa o radar quantitativo de ações americanas (dados do **terminal Webull**, via MCP)
 e atualiza o dashboard publicado e a watchlist. **Conta Webull é somente leitura — nunca enviar ordens.**
 Isto é análise/educacional, **não recomendação de investimento**.
 
+> **Hardening:** o pipeline é 100% orientado a dados. Você **não edita código** — só derruba as
+> saídas cruas do Webull em `data/raw/` e roda a cadeia. O que faltar cai no *fallback* do último run.
+
 ## Artefatos fixos
-- **Artifact (dashboard):** `https://claude.ai/artifact/3v1eBAMC3MCYvBWTEScSAK` (publicar com `url=` este link para manter a mesma URL).
+- **Artifact (dashboard):** `https://claude.ai/artifact/3v1eBAMC3MCYvBWTEScSAK` (publicar com `url=` este link).
 - **Watchlist Webull:** `Radar Swing Quant` — id `72042905c55b45448b0198b2ccab4e3b`.
-- **Branch:** `claude/webull-stock-analysis-quantitative-jzk92h` do repo `felipempugliesi/Claude`.
-- **Scripts (template de referência):** `analysis/pipeline.py`, `analysis/payload2.py`, `analysis/build2.py`.
+- **Branch:** `claude/webull-stock-analysis-quantitative-jzk92h` (repo `felipempugliesi/Claude`).
+- **Config estática:** `data/meta.json` (universo de 32 tickers, nomes, setores, teses, flag GBP). Só muda se o universo mudar.
 
-## Universo (32 tickers)
-Semis/Tech: `NVDA AMD INTC MU TSM AVGO META GOOGL AAPL ORCL PLTR TSLA`
-Mid/small wave 2: `SMTC TWST HAFN TRMD CVI SDGR SMMT ODD FRNM SECZ ASST PURR`
-Mid/small wave 3: `HALO DBX OSCR TXG IOVA PBF MG INFU`
+## Fluxo
+### 1. Buscar dados (Webull MCP) e salvar CRU em `data/raw/`
+Para os 32 tickers de `data/meta.json`:
+- `get_stock_snapshot` (lote, todos) → salvar a **lista retornada** em `data/raw/snapshot.json`.
+- `get_stock_bars` (timespan `D`, count `70`, RTH; lotes ≤20) → cada saída (auto-salva em arquivo quando grande)
+  vai para `data/raw/bars/bars1.json`, `bars2.json`, … (o objeto `{"result":[{symbol,result:[...]}]}` como veio).
+- `get_analyst_target_price` (por ticker) → juntar as saídas numa **lista** em `data/raw/analyst_target.json`.
+- `get_analyst_rating` (por ticker) → **lista** em `data/raw/analyst_rating.json`.
+- `get_stock_capital_flow` (count 3, por ticker) → objeto **`{TICKER: <saída de 3 dias>}`** em `data/raw/capital_flow.json`.
+- (opcional) `data/raw/asof.txt` com o rótulo da data, ex.: `19 set 2026 (fechamento)`.
 
-## Passos
-1. **Re-puxar dados atuais** (Webull MCP) para os 32 tickers:
-   - `get_stock_snapshot` (P/E, P/S, EPS_TTM, máx/mín 52s, market cap, yield) — em lotes.
-   - `get_stock_bars` (timespan `D`, count `70`, RTH) — em lotes de ≤20; o resultado grande é salvo em arquivo (processar com Python).
-   - `get_analyst_target_price` e `get_analyst_rating` (por ticker).
-   - `get_stock_capital_flow` (count 3, por ticker) → fluxo líquido de ordens grandes+médias.
-2. **Atualizar os dicionários** em `pipeline.py` (`snap`, `tgt`, `rat`, `cf`) com os valores novos e ajustar
-   `files=[...]` para os caminhos dos arquivos de candles salvos, e `BASE` para o scratchpad da sessão.
-   *(Observação: SMMT publica alvo em GBP — converter ~×1,26 e manter a flag `gbp_flag`.)*
-3. **Rodar** `python3 pipeline.py && python3 payload2.py && python3 build2.py` → gera `dashboard.html`.
-   - Modelo A = **Momentum (agressivo)**; Modelo B = **Qualidade + Recuo**; ambos com stop 2×ATR, alvos 2R/3R e sizing por volatilidade.
-4. **Publicar** o `dashboard.html` atualizando o artifact existente (passar `url=` o link acima).
-5. **Atualizar a watchlist** Webull `Radar Swing Quant`: manter BUYs dos dois modelos + near-buy + nomes de qualidade;
-   remover o que saiu (`remove_watchlist_instruments`), adicionar novos (`add_watchlist_instruments`).
-6. **Commit + push** do `dashboard.html` (e dos scripts, se alterados) na branch.
-7. **Resumo** (para push/email): mudanças de veredito vs. execução anterior em cada modelo, novos BUY/SELL,
-   e alertas (papéis que romperam stop, encostaram no alvo, ou RSI em extremo).
+*Não precisa converter nada:* `assemble.py` extrai os campos, converte fluxo $→$M, mcap→$bn e alvo GBP→USD.
 
-## Metodologia (resumo)
-- Cada fator → **z-score** vs. a média do universo; combinação ponderada; score reescalado 0–100; BUY ≥55, HOLD 45–55, SELL <45.
-- **Modelo A (Momentum):** momentum 35% · técnico 25% · fluxo 15% · analistas 20% (× confiança da cobertura) · valuation 5%. Penaliza esticado/parabólico.
-- **Modelo B (Qualidade+Recuo):** qualidade 30% · recuo 30% (RSI 40–58, perto SMA20, ~5–18% off-high) · tendência 15% (acima SMA50) · upside 20% · fluxo 5%. *Quality gate* barra junk/tendência quebrada/parabólica no BUY.
+### 2. Montar + pontuar + publicar (sem editar código)
+```
+python3 analysis/assemble.py        # data/raw/* + fallback -> data/radar_data.json (+ relatório de faltantes)
+python3 analysis/pipeline.py        # -> data/radar_scored.json (2 modelos + stops/alvos/sizing)
+python3 analysis/build_payload.py   # -> data/payload.json
+python3 analysis/build.py           # -> dashboard.html
+```
+3. **Publicar** `dashboard.html` atualizando o artifact existente (passar `url=` o link acima).
+4. **Watchlist**: manter BUYs dos dois modelos + near-buy + qualidade; remover o que saiu, adicionar novos.
+5. **Commit + push** (`dashboard.html`, `data/`) na branch.
+6. **Resumo** (curto): mudanças de veredito por modelo, novos BUY/SELL e alertas (rompeu stop, encostou no alvo, RSI extremo).
 
 ## Degradação graciosa
-Se o re-fetch completo dos 32 for inviável no tempo disponível, priorizar os nomes da **watchlist**,
-recomputar seus sinais e reportar mudanças/alertas — sem falhar silenciosamente.
+`assemble.py` usa o `data/radar_data.json` anterior como *fallback* por campo. Se faltar tempo, atualize ao menos
+**snapshot + bars** (preço/técnico) e deixe analistas/fluxo do run anterior — o relatório do assemble lista o que faltou.
 
-## Hardening futuro (opcional)
-Refatorar o `pipeline.py` para ler os dados de arquivos JSON gerados no passo 1 (em vez de dicionários hardcoded),
-tornando o job 100% automático sem edição manual de código.
+## Modelos (resumo)
+- Fator → **z-score** vs. média do universo; combinação ponderada; score 0–100; BUY ≥55, HOLD 45–55, SELL <45.
+- **A · Momentum (agressivo):** momentum 35 · técnico 25 · fluxo 15 · analistas 20 (× confiança da cobertura) · valuation 5. Penaliza esticado/parabólico.
+- **B · Qualidade + Recuo:** qualidade 30 · recuo 30 (RSI 40–58, perto SMA20, ~5–18% off-high) · tendência 15 (acima SMA50) · upside 20 · fluxo 5. *Quality gate* barra junk/tendência quebrada/parabólica no BUY.
+
+## Mudar o universo
+Editar `data/meta.json` (tickers, meta.name/sector, thesis, gbp). Nenhum outro arquivo precisa mudar.
