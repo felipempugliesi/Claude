@@ -94,6 +94,12 @@ NASDAQ_SESSIONS = (
     Session("19:00", "20:00", "Power hour"),
 )
 
+# ETFs de moeda (FXE/FXB) so negociam no RTH dos EUA (nao 24h). Como tem baixa
+# liquidez intradiaria, usamos o pregao inteiro como uma unica sessao.
+US_RTH_FULL = (
+    Session("13:30", "20:00", "US RTH"),
+)
+
 
 # ---------------------------------------------------------------------------
 # Instrumentos
@@ -124,6 +130,19 @@ INSTRUMENTS: dict[str, Instrument] = {
         point_value=1.0, min_size=1.0, spread=0.02,
         tick_size=0.01, sessions=NASDAQ_SESSIONS,
     ),
+    # --- Proxies de forex via ETF de moeda (US_ETF no Webull) ---
+    # FXE ~ EUR/USD, FXB ~ GBP/USD. Negociam so no RTH dos EUA; baixa liquidez
+    # intradiaria. Sao PROXY de forex dado o acesso, nao o mercado 24h.
+    "FXE": Instrument(  # Invesco CurrencyShares Euro Trust (~EUR/USD)
+        symbol="FXE", asset_class="fx_etf",
+        point_value=1.0, min_size=1.0, spread=0.03,
+        tick_size=0.01, sessions=US_RTH_FULL,
+    ),
+    "FXB": Instrument(  # Invesco CurrencyShares British Pound (~GBP/USD)
+        symbol="FXB", asset_class="fx_etf",
+        point_value=1.0, min_size=1.0, spread=0.04,
+        tick_size=0.01, sessions=US_RTH_FULL,
+    ),
 }
 
 
@@ -147,6 +166,13 @@ PARAMS_BY_CLASS: dict[str, StrategyParams] = {
         atr_min_pct=0.05, atr_max_pct=2.50,
         stop_atr_mult=1.8, target_atr_mult=3.6, risk_per_trade=0.005,
         max_trades_per_day=3,
+    ),
+    # ETF de moeda: comportamento parecido com forex (ATR% intradiario baixo).
+    "fx_etf": StrategyParams(
+        ema_fast=9, ema_slow=21, ema_trend=50, adx_min=18.0,
+        atr_min_pct=0.02, atr_max_pct=0.60,
+        stop_atr_mult=1.5, target_atr_mult=3.0, risk_per_trade=0.005,
+        max_trades_per_day=4,
     ),
 }
 

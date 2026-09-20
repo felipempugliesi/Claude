@@ -214,6 +214,29 @@ recusando as entradas de baixa qualidade.
 
 ---
 
+## 5b. Resultados em dados REAIS (Webull)
+
+Dados puxados do Webull (M5, RTH) e normalizados por `quantday/webull.py`.
+Como a assinatura só cobre market data de ações/ETFs, usamos QQQ para NASDAQ e
+ETFs de moeda (FXE, FXB) como proxy de forex — ver ressalvas no README.
+
+`python examples/run_webull.py` — capital US$100k, 0.5%/trade:
+
+| Instrumento    | Pregões | Trades | Acerto | Profit factor | Expectancy | Retorno | Max DD |
+|----------------|--------:|-------:|-------:|--------------:|-----------:|--------:|-------:|
+| QQQ (NASDAQ)   | 62      | 12     | 58.3%  | 2.83          | +0.76 R    | +4.6%   | −1.0%  |
+| FXE (~EUR/USD) | 65      | 5      | 20.0%  | 0.50          | −0.40 R    | −1.0%   | −1.0%  |
+| FXB (~GBP/USD) | 95      | 2      | —      | —             | −1.00 R    | −1.0%   | −1.0%  |
+
+- **QQQ (líquido)**: perfil coerente com a tese — 12 setups seletivos em 62
+  pregões, acerto 58% e PF 2.83. Uma amostra ainda pequena, mas o
+  comportamento é o esperado.
+- **ETFs de moeda**: quase não disparam (5 e 2 trades) e o resultado é ruído.
+  Métricas com n < ~20 trades **não são confiáveis** (o Sharpe do FXB, por
+  exemplo, é artefato de amostra mínima). Conclusão: currency ETFs são
+  veículos ruins para day trade intradiário; para forex de verdade, use
+  futuros de moeda (6E/6B) ou uma fonte spot 24h.
+
 ## 6. Como levar para dados reais
 
 1. **Dados**: obtenha OHLCV intradiário (5 min) do seu broker/fonte
@@ -222,6 +245,12 @@ recusando as entradas de baixa qualidade.
    ```
    python examples/run_backtest.py --csv seus_dados.csv --symbol EURUSD
    ```
+   **Via Webull**: `quantday/webull.py` já faz isso. Com suas credenciais
+   (`WEBULL_APP_KEY`/`WEBULL_APP_SECRET` + SDK oficial), `WebullMDataClient`
+   busca e pagina o histórico; sem credenciais, `normalize_bars` converte
+   qualquer JSON de candles do Webull no formato do backtest.
+   Lembre: futuros exigem assinatura à parte; para NASDAQ use QQQ (ou NQ/MNQ
+   se tiver a assinatura de futuros).
 2. **Custos reais**: ajuste `spread` (e adicione comissão/slippage) em
    `config.py` para o seu broker. Forex/CFD embutem spread; futuros têm
    comissão por contrato.

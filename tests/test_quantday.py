@@ -13,7 +13,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from quantday import config, data, indicators as ind, signals, risk, backtest  # noqa: E402
+from quantday import config, data, indicators as ind, signals, risk, backtest, webull  # noqa: E402
 
 
 def _sample(n=500, seed=3):
@@ -103,6 +103,33 @@ def test_signals_only_in_session():
     s = signals.generate(df, p, inst.sessions)
     fired = s[s["long_signal"] | s["short_signal"]]
     assert fired["session_ok"].all()
+
+
+def test_webull_normalize_bars():
+    # formato real do endpoint get_stock_bars (strings, ISO UTC, mais novo -> antigo)
+    raw = [
+        {"symbol": "QQQ", "time": "2026-09-18T19:55:00.000+0000", "open": "720.24",
+         "close": "721.45", "high": "721.72", "low": "720.23", "volume": "6971592",
+         "trading_session": "RTH"},
+        {"symbol": "QQQ", "time": "2026-09-18T19:50:00.000+0000", "open": "720.09",
+         "close": "720.23", "high": "720.44", "low": "719.84", "volume": "1109502",
+         "trading_session": "RTH"},
+        # duplicata de tempo deve ser removida
+        {"symbol": "QQQ", "time": "2026-09-18T19:50:00.000+0000", "open": "999",
+         "close": "999", "high": "999", "low": "999", "volume": "1",
+         "trading_session": "RTH"},
+    ]
+    df = webull.normalize_bars(raw)
+    assert list(df.columns) == ["open", "high", "low", "close", "volume"]
+    assert len(df) == 2                              # duplicata removida
+    assert df.index.is_monotonic_increasing          # ordenado do antigo p/ novo
+    assert df.index.tz is None                        # tz-naive UTC
+    assert df["close"].dtype.kind == "f"              # numerico
+    assert abs(df["close"].iloc[-1] - 721.45) < 1e-6  # ultima barra = a mais nova
+
+
+def test_webull_normalize_empty():
+    assert webull.normalize_bars([]).empty
 
 
 def _run_all():

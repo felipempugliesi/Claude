@@ -22,15 +22,61 @@ pip install -r requirements.txt   # pandas, numpy
 ## Uso rápido
 
 ```bash
-# roda a cesta completa (forex + NASDAQ) em dados sintéticos
+# DADOS REAIS do Webull (CSVs já incluídos em data/)
+python examples/run_webull.py
+
+# dados sintéticos (cesta completa forex + NASDAQ)
 python examples/run_backtest.py --days 250
 
-# um instrumento específico
+# um instrumento específico (sintético)
 python examples/run_backtest.py --symbol MNQ --days 180
 
 # seus próprios dados (CSV em UTC: timestamp,open,high,low,close,volume)
 python examples/run_backtest.py --csv meus_dados.csv --symbol EURUSD
 ```
+
+## Dados reais via Webull
+
+Os dados em `data/*.csv` foram puxados do **Webull** (endpoint de candles) e
+normalizados por [`quantday/webull.py`](quantday/webull.py). Restrições da
+assinatura usada e como contorná-las:
+
+| Quero      | Ideal          | Disponível no Webull aqui | Usado           |
+|------------|----------------|---------------------------|-----------------|
+| NASDAQ     | futuro NQ/MNQ  | futuros exigem assinatura separada ❌ | **QQQ** (ETF) ✓ |
+| Forex      | spot / 6E, 6B  | sem spot; futuros ❌       | **FXE**(~EUR/USD), **FXB**(~GBP/USD) — ETFs de moeda |
+
+> ⚠️ ETFs de moeda negociam **só no pregão dos EUA** (não 24h), têm **baixa
+> liquidez intradiária** (barras esparsas) e **não são** o mercado forex real.
+> São um proxy dado o acesso. Para forex de verdade, use futuros de moeda
+> (assinatura de futuros) ou uma fonte 24h (Dukascopy, MetaTrader).
+
+**Resultados em dados reais** (`python examples/run_webull.py`, M5, US$100k, 0.5%/trade):
+
+| Instrumento      | Pregões | Trades | Acerto | Profit factor | Retorno | Max DD |
+|------------------|--------:|-------:|-------:|--------------:|--------:|-------:|
+| QQQ (NASDAQ)     | 62      | 12     | 58.3%  | 2.83          | +4.6%   | −1.0%  |
+| FXE (~EUR/USD)   | 65      | 5      | 20.0%  | 0.50          | −1.0%   | −1.0%  |
+| FXB (~GBP/USD)   | 95      | 2      | —      | —             | −1.0%   | −1.0%  |
+
+Leitura honesta: em ativo **líquido** (QQQ) a estratégia se comporta como
+esperado (poucos trades, seletivos, com relação risco/retorno favorável). Nos
+**ETFs de moeda** ela quase não dispara e o pouco que dispara é ruído — a
+lição é que **currency ETFs são veículos ruins para day trade intradiário**
+(amostra pequena, métricas não confiáveis). É a evidência a favor de usar
+futuros/spot de verdade para forex.
+
+### Atualizar/estender os dados (com suas credenciais)
+
+```python
+from quantday.webull import WebullMDataClient
+cli = WebullMDataClient()                       # lê WEBULL_APP_KEY / WEBULL_APP_SECRET
+df = cli.get_bars("QQQ", "US_ETF", "M5", count=3000)   # pagina automaticamente
+WebullMDataClient.to_csv(df, "data/QQQ_M5.csv")
+```
+Requer `pip install webull-python-sdk-core webull-python-sdk-mdata`. Sem
+credenciais, `quantday.webull.normalize_bars(...)` converte qualquer JSON de
+candles do Webull no formato do backtest.
 
 Testes:
 
@@ -49,8 +95,14 @@ quantday/
   risk.py         # stop/alvo por ATR, sizing fixo-fracionário, R-múltiplo
   backtest.py     # motor bar-a-bar (execução na próxima abertura, sem look-ahead)
   metrics.py      # win rate, profit factor, expectancy, Sharpe, drawdown
+  webull.py       # adaptador Webull: normaliza candles + cliente OpenAPI SDK
+data/
+  QQQ_M5.csv      # dados REAIS do Webull (NASDAQ-100 ETF)
+  FXE_M5.csv      # dados REAIS do Webull (~EUR/USD)
+  FXB_M5.csv      # dados REAIS do Webull (~GBP/USD)
 examples/
-  run_backtest.py # demonstração executável
+  run_backtest.py # demonstração em dados sintéticos
+  run_webull.py   # demonstração em dados reais do Webull
 tests/
   test_quantday.py
 docs/
