@@ -13,7 +13,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from quantday import config, data, indicators as ind, signals, risk, backtest, webull  # noqa: E402
+from quantday import config, data, indicators as ind, signals, risk, backtest, webull, walkforward  # noqa: E402
 
 
 def _sample(n=500, seed=3):
@@ -130,6 +130,28 @@ def test_webull_normalize_bars():
 
 def test_webull_normalize_empty():
     assert webull.normalize_bars([]).empty
+
+
+def test_session_tz_dst():
+    # 14:00 UTC em janeiro (EST) = 09:00 ET -> fora da sessao 09:30-16:00
+    # 14:00 UTC em julho (EDT) = 10:00 ET -> dentro da sessao
+    idx = pd.DatetimeIndex(["2025-01-15 14:00", "2025-07-15 14:00"])
+    mask = signals._in_sessions(idx, config.US_RTH_FULL, "America/New_York")
+    assert bool(mask.iloc[0]) is False   # inverno: 09:00 ET, antes da abertura
+    assert bool(mask.iloc[1]) is True    # verao: 10:00 ET, pregao aberto
+
+
+def test_walkforward_runs():
+    inst = config.INSTRUMENTS["MNQ"]
+    p = config.params_for(inst)
+    df = data.synthetic_intraday(days=200, base_price=18000, ann_vol=0.22,
+                                 session_start="13:30", session_end="20:00", seed=5)
+    res = walkforward.run(df, inst, p, is_days=60, oos_days=20,
+                          grid={"adx_min": [18.0, 22.0]})
+    assert res["n_folds"] >= 1
+    assert "oos_summary" in res and "wf_efficiency" in res
+    # trades OOS nunca excedem o total; estrutura coerente
+    assert res["oos_summary"]["n_trades"] >= 0
 
 
 def _run_all():

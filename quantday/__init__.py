@@ -13,4 +13,7 @@ Modulos:
 
 __version__ = "0.1.0"
 
-from . import config, data, indicators, signals, risk, backtest, metrics  # noqa: F401
+from . import (  # noqa: F401
+    config, data, indicators, signals, risk, backtest, metrics,
+    webull, walkforward,
+)

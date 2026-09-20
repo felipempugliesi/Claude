@@ -31,11 +31,21 @@ import pandas as pd
 from . import indicators as ind
 
 
-def _in_sessions(index: pd.DatetimeIndex, sessions) -> pd.Series:
-    """Mascara booleana: True quando o horario UTC cai em alguma sessao."""
+def _in_sessions(index: pd.DatetimeIndex, sessions, session_tz: str = "UTC") -> pd.Series:
+    """Mascara booleana: True quando o horario cai em alguma sessao.
+
+    O index chega em UTC (tz-naive). As janelas `sessions` sao definidas em
+    `session_tz` (ex.: "America/New_York"), entao convertemos o horario para
+    esse fuso antes de comparar. Assim o filtro acompanha o DST: 09:30 ET e
+    sempre a abertura, seja 13:30 (EDT) ou 14:30 (EST) em UTC.
+    """
     if not sessions:
         return pd.Series(True, index=index)
-    minutes = index.hour * 60 + index.minute
+    if session_tz and session_tz != "UTC":
+        local = index.tz_localize("UTC").tz_convert(session_tz)
+    else:
+        local = index
+    minutes = local.hour * 60 + local.minute
     mask = pd.Series(False, index=index)
     for s in sessions:
         sh, sm = map(int, s.start.split(":"))
@@ -46,7 +56,7 @@ def _in_sessions(index: pd.DatetimeIndex, sessions) -> pd.Series:
     return mask
 
 
-def generate(df: pd.DataFrame, params, sessions=()) -> pd.DataFrame:
+def generate(df: pd.DataFrame, params, sessions=(), session_tz: str = "UTC") -> pd.DataFrame:
     """Recebe OHLCV, devolve o mesmo DataFrame com indicadores + colunas de sinal.
 
     Colunas adicionadas:
@@ -82,7 +92,7 @@ def generate(df: pd.DataFrame, params, sessions=()) -> pd.DataFrame:
     data["vol_ok"] = vol_ok
 
     # --- Filtro de sessao ---
-    session_ok = _in_sessions(data.index, sessions)
+    session_ok = _in_sessions(data.index, sessions, session_tz)
     data["session_ok"] = session_ok
 
     # --- Gatilho de pullback (momentum) ---

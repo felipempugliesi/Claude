@@ -22,7 +22,10 @@ pip install -r requirements.txt   # pandas, numpy
 ## Uso rápido
 
 ```bash
-# DADOS REAIS do Webull (CSVs já incluídos em data/)
+# WALK-FORWARD em dados reais (~2,3 anos) — o teste honesto (out-of-sample)
+python examples/run_walkforward.py --symbol QQQ
+
+# backtest simples em DADOS REAIS do Webull (CSVs incluídos em data/)
 python examples/run_webull.py
 
 # dados sintéticos (cesta completa forex + NASDAQ)
@@ -37,34 +40,51 @@ python examples/run_backtest.py --csv meus_dados.csv --symbol EURUSD
 
 ## Dados reais via Webull
 
-Os dados em `data/*.csv` foram puxados do **Webull** (endpoint de candles) e
-normalizados por [`quantday/webull.py`](quantday/webull.py). Restrições da
-assinatura usada e como contorná-las:
+Os dados em `data/*.csv` (~2,3 anos de barras M5) foram puxados do **Webull**
+(endpoint de candles) e normalizados por [`quantday/webull.py`](quantday/webull.py).
 
-| Quero      | Ideal          | Disponível no Webull aqui | Usado           |
-|------------|----------------|---------------------------|-----------------|
-| NASDAQ     | futuro NQ/MNQ  | futuros exigem assinatura separada ❌ | **QQQ** (ETF) ✓ |
-| Forex      | spot / 6E, 6B  | sem spot; futuros ❌       | **FXE**(~EUR/USD), **FXB**(~GBP/USD) — ETFs de moeda |
+**Futuros continuam bloqueados nesta conta.** Re-testei MNQ, M6E e M6B em M5 e
+diário — todos retornam `MARKET_DATA_NOT_SUBSCRIBED: subscribe to US_FUTURES`.
+Sem essa assinatura, o walk-forward roda nos instrumentos acessíveis (ETFs):
 
-> ⚠️ ETFs de moeda negociam **só no pregão dos EUA** (não 24h), têm **baixa
-> liquidez intradiária** (barras esparsas) e **não são** o mercado forex real.
-> São um proxy dado o acesso. Para forex de verdade, use futuros de moeda
-> (assinatura de futuros) ou uma fonte 24h (Dukascopy, MetaTrader).
+| Quero  | Alvo ideal      | Webull nesta conta          | Usado no walk-forward |
+|--------|-----------------|-----------------------------|-----------------------|
+| NASDAQ | futuro MNQ      | futuros ❌ (assinatura)      | **QQQ** (ETF)         |
+| Forex  | futuro M6E/M6B  | futuros ❌; sem spot         | **FXE**, **FXB** (ETFs de moeda) |
 
-**Resultados em dados reais** (`python examples/run_webull.py`, M5, US$100k, 0.5%/trade):
+Os instrumentos **MNQ, M6E, M6B já estão prontos no `config.py`** (specs reais
+da CME). Com a assinatura de US_FUTURES, é um swap de símbolo: puxe as barras
+(`get_futures_bars` / `WebullMDataClient`) e rode `run_walkforward.py --symbol MNQ`.
 
-| Instrumento      | Pregões | Trades | Acerto | Profit factor | Retorno | Max DD |
-|------------------|--------:|-------:|-------:|--------------:|--------:|-------:|
-| QQQ (NASDAQ)     | 62      | 12     | 58.3%  | 2.83          | +4.6%   | −1.0%  |
-| FXE (~EUR/USD)   | 65      | 5      | 20.0%  | 0.50          | −1.0%   | −1.0%  |
-| FXB (~GBP/USD)   | 95      | 2      | —      | —             | −1.0%   | −1.0%  |
+> ⚠️ Os ETFs de moeda negociam **só no pregão dos EUA** (não 24h), têm baixa
+> liquidez intradiária e **não são** forex real — proxy dado o acesso.
 
-Leitura honesta: em ativo **líquido** (QQQ) a estratégia se comporta como
-esperado (poucos trades, seletivos, com relação risco/retorno favorável). Nos
-**ETFs de moeda** ela quase não dispara e o pouco que dispara é ruído — a
-lição é que **currency ETFs são veículos ruins para day trade intradiário**
-(amostra pequena, métricas não confiáveis). É a evidência a favor de usar
-futuros/spot de verdade para forex.
+**Fuso/DST:** o filtro de sessão é aplicado em **horário da bolsa**
+(`America/New_York`), então acompanha o horário de verão automaticamente
+(09:30 ET = abertura, seja 13:30 UTC no EDT ou 14:30 no EST). Essencial num
+histórico multi-ano.
+
+### Walk-forward (o teste honesto)
+
+`python examples/run_walkforward.py` otimiza parâmetros numa janela de treino
+(180 pregões, in-sample) e testa na seguinte (45 pregões, out-of-sample),
+deslizando por todo o histórico. **A curva OOS concatenada é o resultado que
+importa.** Resultado (US$100k, 0.5%/trade):
+
+| Instrumento    | Pregões | Folds | Trades OOS | PF OOS | Retorno OOS | WF eff. |
+|----------------|--------:|------:|-----------:|-------:|------------:|--------:|
+| QQQ (NASDAQ)   | 584     | 8     | 41         | 0.98   | −0.3%       | −0.17   |
+| FXE (~EUR/USD) | 612     | 9     | 40         | 0.88   | −1.7%       | −0.41   |
+
+**Leitura honesta — e o ponto central de todo o projeto:** os períodos
+*in-sample* parecem ótimos (retornos positivos em quase todos os folds), mas
+**esse lucro NÃO sobrevive out-of-sample** (PF ≈ 0.9, retorno levemente
+negativo, eficiência WF < 0). Ou seja: a lucratividade in-sample era em boa
+parte **overfitting/sorte**, não edge real. Um backtest único e otimizado teria
+mostrado números bonitos e enganosos; **o walk-forward expõe a verdade**. Como
+está, a estratégia **não tem edge robusto** nesses instrumentos/período — não
+opere capital real com ela sem antes encontrar e validar (walk-forward) uma
+fonte de edge genuína. Isso é o sucesso do método, não uma falha do exercício.
 
 ### Atualizar/estender os dados (com suas credenciais)
 
@@ -96,13 +116,15 @@ quantday/
   backtest.py     # motor bar-a-bar (execução na próxima abertura, sem look-ahead)
   metrics.py      # win rate, profit factor, expectancy, Sharpe, drawdown
   webull.py       # adaptador Webull: normaliza candles + cliente OpenAPI SDK
+  walkforward.py  # walk-forward: otimização IS rolante + teste OOS + eficiência WF
 data/
-  QQQ_M5.csv      # dados REAIS do Webull (NASDAQ-100 ETF)
+  QQQ_M5.csv      # dados REAIS do Webull (~2,3 anos, NASDAQ-100 ETF)
   FXE_M5.csv      # dados REAIS do Webull (~EUR/USD)
   FXB_M5.csv      # dados REAIS do Webull (~GBP/USD)
 examples/
-  run_backtest.py # demonstração em dados sintéticos
-  run_webull.py   # demonstração em dados reais do Webull
+  run_backtest.py     # demonstração em dados sintéticos
+  run_webull.py       # backtest simples em dados reais do Webull
+  run_walkforward.py  # walk-forward em dados reais (out-of-sample)
 tests/
   test_quantday.py
 docs/

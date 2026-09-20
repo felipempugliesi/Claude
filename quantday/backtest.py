@@ -57,7 +57,8 @@ def run(
     """
     from . import metrics
 
-    data = sig.generate(df, params, instrument.sessions)
+    data = sig.generate(df, params, instrument.sessions,
+                         getattr(instrument, "session_tz", "UTC"))
     data = data.dropna(subset=["ema_trend", "atr", "adx", "rsi", "vwap"]).copy()
     if data.empty:
         return pd.DataFrame(), pd.Series(dtype=float), metrics.summarize(

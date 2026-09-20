@@ -237,6 +237,37 @@ ETFs de moeda (FXE, FXB) como proxy de forex — ver ressalvas no README.
   veículos ruins para day trade intradiário; para forex de verdade, use
   futuros de moeda (6E/6B) ou uma fonte spot 24h.
 
+## 5c. Walk-forward em ~2,3 anos de dados reais (o teste decisivo)
+
+Um backtest único otimizado engana. O walk-forward mede o que importa: otimiza
+parâmetros numa janela de treino (in-sample, 180 pregões) e testa na seguinte
+(out-of-sample, 45 pregões), deslizando por todo o histórico. A curva OOS
+concatenada é a estimativa honesta.
+
+`python examples/run_walkforward.py --symbol QQQ` (US$100k, 0.5%/trade):
+
+| Instrumento    | Pregões | Folds | Trades OOS | PF OOS | Retorno OOS | WF eff. |
+|----------------|--------:|------:|-----------:|-------:|------------:|--------:|
+| QQQ (NASDAQ)   | 584     | 8     | 41         | 0.98   | −0.3%       | −0.17   |
+| FXE (~EUR/USD) | 612     | 9     | 40         | 0.88   | −1.7%       | −0.41   |
+
+**Conclusão honesta:** em quase todos os folds o *in-sample* é positivo, mas o
+*out-of-sample* não é — PF ≈ 0.9, retorno levemente negativo, eficiência WF < 0
+(o edge IS não sobrevive fora da amostra). A lucratividade in-sample era
+majoritariamente **overfitting/sorte**. Como está, **a estratégia não tem edge
+robusto** nesses instrumentos/período. Isso é o walk-forward fazendo seu
+trabalho: um backtest simples teria exibido números bonitos e falsos.
+
+Notas metodológicas importantes deste exercício:
+- **Futuros bloqueados**: MNQ/M6E/M6B exigem assinatura US_FUTURES (indisponível).
+  Rodamos em QQQ e ETFs de moeda; os futuros ficam prontos em `config.py`.
+- **DST**: o filtro de sessão roda em horário da bolsa (`America/New_York`),
+  acompanhando o horário de verão — sem isso, metade do histórico multi-ano
+  entraria na janela errada.
+- **Poucos trades por fold** (estratégia seletiva) → baixo poder estatístico;
+  parte do resultado OOS é ruído. Mais dados/instrumentos e uma fonte de edge
+  mais forte são necessários antes de qualquer conclusão positiva.
+
 ## 6. Como levar para dados reais
 
 1. **Dados**: obtenha OHLCV intradiário (5 min) do seu broker/fonte
