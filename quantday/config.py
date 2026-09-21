@@ -98,10 +98,20 @@ NASDAQ_SESSIONS = (
     Session("15:00", "16:00", "Power hour"),
 )
 
+# Indices de acoes dos EUA (MES/MYM/M2K): mesma estrutura de sessao do MNQ.
+EQUITY_INDEX_SESSIONS = NASDAQ_SESSIONS
+
 # ETFs de moeda (FXE/FXB) so negociam no RTH dos EUA (nao 24h). Como tem baixa
 # liquidez intradiaria, usamos o pregao inteiro (09:30-16:00 ET) como sessao.
 US_RTH_FULL = (
     Session("09:30", "16:00", "US RTH"),
+)
+
+# Commodities (ouro/petroleo/cobre): negociam quase 24h no Globex, mas o volume
+# concentra-se na manha dos EUA + overlap com Londres. Janela pragmatica e
+# ajustavel (ex.: inventarios de petroleo saem qua 10:30 ET). Em horario de NY.
+COMMODITY_SESSIONS = (
+    Session("08:00", "12:00", "US AM / London overlap"),
 )
 
 
@@ -162,6 +172,43 @@ INSTRUMENTS: dict[str, Instrument] = {
         point_value=6_250.0, min_size=1.0, spread=0.00010,
         tick_size=0.00001, sessions=FX_SESSIONS, session_tz="UTC",
     ),
+    "M6A": Instrument(  # Micro AUD/USD (notional 10.000 AUD); 1 pip=USD 1,00
+        symbol="M6A", asset_class="fx_future",
+        point_value=10_000.0, min_size=1.0, spread=0.00006,
+        tick_size=0.00001, sessions=FX_SESSIONS, session_tz="UTC",
+    ),
+    "MCD": Instrument(  # Micro CAD/USD (notional 10.000 CAD); 1 pip=USD 1,00
+        symbol="MCD", asset_class="fx_future",
+        point_value=10_000.0, min_size=1.0, spread=0.00006,
+        tick_size=0.00001, sessions=FX_SESSIONS, session_tz="UTC",
+    ),
+    # --- Indices de acoes dos EUA (CME/CBOT) — mesmo perfil do MNQ ---
+    "MES": Instrument(  # Micro E-mini S&P 500 (USD 5/ponto); tick 0,25=USD 1,25
+        symbol="MES", asset_class="index_future",
+        point_value=5.0, min_size=1.0, spread=0.25,
+        tick_size=0.25, sessions=EQUITY_INDEX_SESSIONS, session_tz="America/New_York",
+    ),
+    "MYM": Instrument(  # Micro E-mini Dow (USD 0,50/ponto); tick 1=USD 0,50
+        symbol="MYM", asset_class="index_future",
+        point_value=0.5, min_size=1.0, spread=1.0,
+        tick_size=1.0, sessions=EQUITY_INDEX_SESSIONS, session_tz="America/New_York",
+    ),
+    "M2K": Instrument(  # Micro E-mini Russell 2000 (USD 5/ponto); tick 0,1=USD 0,50
+        symbol="M2K", asset_class="index_future",
+        point_value=5.0, min_size=1.0, spread=0.10,
+        tick_size=0.10, sessions=EQUITY_INDEX_SESSIONS, session_tz="America/New_York",
+    ),
+    # --- Commodities (COMEX/NYMEX) ---
+    "MGC": Instrument(  # Micro Gold (10 oz -> USD 10 por USD 1 de ouro); tick 0,1=USD 1
+        symbol="MGC", asset_class="commodity_future",
+        point_value=10.0, min_size=1.0, spread=0.10,
+        tick_size=0.10, sessions=COMMODITY_SESSIONS, session_tz="America/New_York",
+    ),
+    "MCL": Instrument(  # Micro WTI Crude (100 bbl -> USD 100 por USD 1); tick 0,01=USD 1
+        symbol="MCL", asset_class="commodity_future",
+        point_value=100.0, min_size=1.0, spread=0.01,
+        tick_size=0.01, sessions=COMMODITY_SESSIONS, session_tz="America/New_York",
+    ),
 }
 
 
@@ -198,6 +245,14 @@ PARAMS_BY_CLASS: dict[str, StrategyParams] = {
         ema_fast=9, ema_slow=21, ema_trend=50, adx_min=18.0,
         atr_min_pct=0.02, atr_max_pct=0.60,
         stop_atr_mult=1.5, target_atr_mult=3.0, risk_per_trade=0.005,
+        max_trades_per_day=4,
+    ),
+    # Commodities (ouro/petroleo/cobre): ATR% intermediario, tendencias fortes;
+    # petroleo e mais volatil/news-driven -> stop um pouco mais largo.
+    "commodity_future": StrategyParams(
+        ema_fast=9, ema_slow=21, ema_trend=50, adx_min=20.0,
+        atr_min_pct=0.05, atr_max_pct=3.00,
+        stop_atr_mult=1.8, target_atr_mult=3.6, risk_per_trade=0.005,
         max_trades_per_day=4,
     ),
 }
