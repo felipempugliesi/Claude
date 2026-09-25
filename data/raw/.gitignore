@@ -1,0 +1,6 @@
+*
+!.gitignore
+!.gitkeep
+!bars/
+bars/*
+!bars/.gitkeep
